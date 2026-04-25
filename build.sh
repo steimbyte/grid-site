@@ -13,18 +13,27 @@ echo "📦 Building npm..."
 npm run build
 
 echo "📁 Copying dist to server/public..."
+# Backup index.html with mobile meta tags
+cp server/public/index.html /tmp/index.html.bak
 cp -r dist/* server/public/
-
-# Preserve Lucide CDN in index.html
-if ! grep -q "lucide" server/public/index.html; then
-  sed -i 's|<script type="module" crossorigin src="|<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>\n  <script type="module" crossorigin src="|' server/public/index.html
-fi
+# Restore index.html
+cp /tmp/index.html.bak server/public/index.html
 
 echo "🐳 Docker compose down..."
 docker-compose down
 
 echo "🐳 Docker compose build & up..."
 docker-compose up -d --build
+
+echo "📤 Pushing to GitHub (deploy branch)..."
+git add -A
+if git diff --staged --quiet; then
+  echo "   No changes to commit"
+else
+  TIMESTAMP=$(date '+%Y-%m-%d %H:%M')
+  git commit -m "deploy: $TIMESTAMP" || true
+  git push origin deploy 2>/dev/null || git push origin master
+fi
 
 echo "✅ Build complete!"
 echo "🌐 http://localhost:3000"
