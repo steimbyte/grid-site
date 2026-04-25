@@ -36,9 +36,9 @@ class SettingsManager {
   static #settingsFile = join(CONFIG.usersDir, 'settings.json');
 
   static #loadSettings() {
-    if (!existsSync(this.#settingsFile)) return { uploadsEnabled: true, userSettings: {} };
+    if (!existsSync(this.#settingsFile)) return { uploadsEnabled: false, userSettings: {} };
     try { return JSON.parse(readFileSync(this.#settingsFile, 'utf-8')); }
-    catch { return { uploadsEnabled: true, userSettings: {} }; }
+    catch { return { uploadsEnabled: false, userSettings: {} }; }
   }
 
   static #saveSettings(data) {
@@ -59,16 +59,12 @@ class SettingsManager {
   // Per-user uploads setting (null = use global, true/false = override)
   static canUserUpload(userId) {
     const settings = this.#loadSettings();
-    // Global check
-    if (settings.uploadsEnabled === false) {
-      // If global is off, only admin can upload (handled elsewhere)
-      return true; // Will be checked by caller
-    }
-    // Per-user check
+    // Per-user check takes priority
     if (settings.userSettings && settings.userSettings[userId] !== undefined) {
       return settings.userSettings[userId];
     }
-    return true; // Default allow
+    // Fall back to global setting
+    return settings.uploadsEnabled === true;
   }
 
   static setUserUpload(userId, enabled) {
