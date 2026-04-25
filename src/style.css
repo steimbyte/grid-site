@@ -2140,3 +2140,23 @@ html {
   gap: 0.5rem;
   cursor: pointer;
 }
+
+/* User upload toggle */
+.user-upload-toggle {
+  padding: 0.5rem;
+  background: var(--glass);
+  border-radius: var(--radius-sm);
+}
+
+.user-upload-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.user-upload-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}

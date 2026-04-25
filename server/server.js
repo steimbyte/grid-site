@@ -36,15 +36,16 @@ class SettingsManager {
   static #settingsFile = join(CONFIG.usersDir, 'settings.json');
 
   static #loadSettings() {
-    if (!existsSync(this.#settingsFile)) return { uploadsEnabled: true };
+    if (!existsSync(this.#settingsFile)) return { uploadsEnabled: true, userSettings: {} };
     try { return JSON.parse(readFileSync(this.#settingsFile, 'utf-8')); }
-    catch { return { uploadsEnabled: true }; }
+    catch { return { uploadsEnabled: true, userSettings: {} }; }
   }
 
   static #saveSettings(data) {
     writeFileSync(this.#settingsFile, JSON.stringify(data, null, 2));
   }
 
+  // Global uploads setting
   static isUploadsEnabled() {
     return this.#loadSettings().uploadsEnabled !== false;
   }
@@ -52,6 +53,28 @@ class SettingsManager {
   static setUploadsEnabled(enabled) {
     const settings = this.#loadSettings();
     settings.uploadsEnabled = enabled;
+    this.#saveSettings(settings);
+  }
+
+  // Per-user uploads setting (null = use global, true/false = override)
+  static canUserUpload(userId) {
+    const settings = this.#loadSettings();
+    // Global check
+    if (settings.uploadsEnabled === false) {
+      // If global is off, only admin can upload (handled elsewhere)
+      return true; // Will be checked by caller
+    }
+    // Per-user check
+    if (settings.userSettings && settings.userSettings[userId] !== undefined) {
+      return settings.userSettings[userId];
+    }
+    return true; // Default allow
+  }
+
+  static setUserUpload(userId, enabled) {
+    const settings = this.#loadSettings();
+    if (!settings.userSettings) settings.userSettings = {};
+    settings.userSettings[userId] = enabled;
     this.#saveSettings(settings);
   }
 
@@ -317,9 +340,16 @@ app.get('/api/sites/:id', authMiddleware(), (req, res) => {
 
 app.post('/api/sites', authMiddleware(), (req, res) => {
   try {
-    // Check if uploads are enabled
-    if (!SettingsManager.isUploadsEnabled() && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Uploads are disabled' });
+    // Admin can always upload
+    if (req.user.role !== 'admin') {
+      // Check global setting
+      if (!SettingsManager.isUploadsEnabled()) {
+        return res.status(403).json({ error: 'Uploads are globally disabled' });
+      }
+      // Check per-user setting
+      if (!SettingsManager.canUserUpload(req.user.userId)) {
+        return res.status(403).json({ error: 'Uploads are disabled for your account' });
+      }
     }
     const { name, content, tags } = req.body;
     if (!name || !content) return res.status(400).json({ error: 'Name and content required' });

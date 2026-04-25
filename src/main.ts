@@ -139,8 +139,36 @@ class App {
     const list = document.getElementById('user-list');
     if (!list) return;
     try {
-      const users = await this.apiRequest<User[]>(`${API}/admin/users`);
-      list.innerHTML = users.map(u => `<div class="user-item"><div class="user-info"><span class="user-name">${u.username}</span><span class="user-role ${u.role}">${u.role}</span></div><div class="user-stats">${u.visits} visits</div><div class="user-actions">${u.role !== 'admin' ? `<button class="user-btn promote" data-id="${u.id}">Promote</button>` : ''}<button class="user-btn delete" data-id="${u.id}">Delete</button></div></div>`).join('');
+      const [users, settings] = await Promise.all([
+        this.apiRequest<User[]>(`${API}/admin/users`),
+        this.apiRequest<{uploadsEnabled: boolean; userSettings: Record<string, boolean>}>(`${API}/settings`)
+      ]);
+      list.innerHTML = users.map(u => `
+        <div class="user-item">
+          <div class="user-info">
+            <span class="user-name">${u.username}</span>
+            <span class="user-role ${u.role}">${u.role}</span>
+          </div>
+          <div class="user-stats">${u.visits} visits</div>
+          ${u.role !== 'admin' ? `
+          <div class="user-upload-toggle">
+            <label><input type="checkbox" class="user-upload-perm" data-id="${u.id}" ${settings.userSettings?.[u.id] !== false ? 'checked' : ''}> <span>Upload</span></label>
+          </div>
+          ` : ''}
+          <div class="user-actions">
+            ${u.role !== 'admin' ? `<button class="user-btn promote" data-id="${u.id}">Promote</button>` : ''}
+            <button class="user-btn delete" data-id="${u.id}">Delete</button>
+          </div>
+        </div>`).join('');
+      
+      list.querySelectorAll('.user-upload-perm').forEach(cb => {
+        cb.addEventListener('change', async (e) => {
+          const userId = (e.target as HTMLElement).dataset.id;
+          const enabled = (e.target as HTMLInputElement).checked;
+          await this.apiRequest(`${API}/settings`, { method: 'PUT', body: JSON.stringify({ userSettings: { ...settings.userSettings, [userId!]: enabled } }) });
+        });
+      });
+      
       list.querySelectorAll('.promote').forEach(b => b.addEventListener('click', () => void this.promoteUser((b as HTMLElement).dataset.id!)));
       list.querySelectorAll('.delete').forEach(b => b.addEventListener('click', () => void this.deleteUser((b as HTMLElement).dataset.id!)));
     } catch { list.innerHTML = '<div class="error">Failed</div>'; }
