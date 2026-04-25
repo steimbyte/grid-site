@@ -10,12 +10,7 @@ export class LoginScreen {
         <div class="card-glow" id="card-glow"></div>
         <div class="form-inner">
           <div class="form-logo">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
+            <i data-lucide="layout-grid"></i>
           </div>
           
           <h2>Welcome to Grid-View</h2>
@@ -39,7 +34,8 @@ export class LoginScreen {
           </div>
           
           <button class="submit-btn" id="btn-login">
-            <span>Sign In</span>
+            <span class="btn-text">Sign In</span>
+            <span class="btn-loader"></span>
           </button>
           
           <div class="login-toggle">
@@ -54,9 +50,11 @@ export class LoginScreen {
   }
 
   static init(onLogin: (username: string, password: string, isRegister: boolean) => Promise<void>): void {
+
     const usernameInput = document.getElementById('login-username') as HTMLInputElement;
     const passwordInput = document.getElementById('login-password') as HTMLInputElement;
     const loginBtn = document.getElementById('btn-login') as HTMLButtonElement;
+    const btnText = loginBtn.querySelector('.btn-text') as HTMLElement;
     const toggleBtn = document.getElementById('btn-toggle') as HTMLButtonElement;
     const toggleText = document.getElementById('toggle-text') as HTMLElement;
     const errorEl = document.getElementById('login-error') as HTMLElement;
@@ -82,11 +80,11 @@ export class LoginScreen {
     const toggleMode = () => {
       isRegister = !isRegister;
       if (isRegister) {
-        loginBtn.querySelector('span')!.textContent = 'Create Account';
+        btnText.textContent = 'Create Account';
         toggleText.textContent = 'Have an account?';
         toggleBtn.textContent = 'Sign in';
       } else {
-        loginBtn.querySelector('span')!.textContent = 'Sign In';
+        btnText.textContent = 'Sign In';
         toggleText.textContent = 'New user?';
         toggleBtn.textContent = 'Create account';
       }
@@ -114,6 +112,7 @@ export class LoginScreen {
       }
 
       loginBtn.classList.add('loading');
+      loginBtn.disabled = true;
       errorEl.classList.remove('show');
       
       try {
@@ -121,9 +120,9 @@ export class LoginScreen {
       } catch (err) {
         errorEl.textContent = err instanceof Error ? err.message : 'Something went wrong';
         errorEl.classList.add('show');
+        loginBtn.classList.remove('loading');
+        loginBtn.disabled = false;
       }
-      
-      loginBtn.classList.remove('loading');
     };
 
     loginBtn?.addEventListener('click', doLogin);

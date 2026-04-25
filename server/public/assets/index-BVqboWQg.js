@@ -1,0 +1,224 @@
+var $=Object.defineProperty;var k=(h,e,t)=>e in h?$(h,e,{enumerable:!0,configurable:!0,writable:!0,value:t}):h[e]=t;var y=(h,e,t)=>k(h,typeof e!="symbol"?e+"":e,t);(function(){const e=document.createElement("link").relList;if(e&&e.supports&&e.supports("modulepreload"))return;for(const i of document.querySelectorAll('link[rel="modulepreload"]'))s(i);new MutationObserver(i=>{for(const a of i)if(a.type==="childList")for(const n of a.addedNodes)n.tagName==="LINK"&&n.rel==="modulepreload"&&s(n)}).observe(document,{childList:!0,subtree:!0});function t(i){const a={};return i.integrity&&(a.integrity=i.integrity),i.referrerPolicy&&(a.referrerPolicy=i.referrerPolicy),i.crossOrigin==="use-credentials"?a.credentials="include":i.crossOrigin==="anonymous"?a.credentials="omit":a.credentials="same-origin",a}function s(i){if(i.ep)return;i.ep=!0;const a=t(i);fetch(i.href,a)}})();class b{static render(e,t=!1,s=[],i){return`
+      <div class="site-grid">
+        <div class="site-card upload-card" id="grid-upload-btn" title="Upload">
+          <div class="upload-card-inner">
+            <i data-lucide="plus"></i>
+            <span>Upload</span>
+          </div>
+        </div>
+        ${e.map(a=>{const n=new Date(a.uploadedAt).toLocaleDateString("de-DE",{day:"2-digit",month:"short",year:"numeric"});return`
+            <div class="site-card" data-id="${a.id}" draggable="true">
+              <div class="card-preview">
+                <div class="preview-frame">
+                  <div class="preview-content">
+                    <div class="preview-placeholder">
+                      <i data-lucide="${a.icon||"file"}"></i>
+                      <span>${b.escapeHtml(a.name)}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-views" title="Views">
+                  <i data-lucide="eye"></i>
+                  <span>${a.views||0}</span>
+                </div>
+                ${a.tags&&a.tags.length?`
+                  <div class="card-tags">
+                    ${a.tags.map(l=>`<span class="card-tag" style="background:${l.color}">${b.escapeHtml(l.name)}</span>`).join("")}
+                  </div>
+                `:""}
+              </div>
+              <div class="card-info">
+                <h3 class="card-title">${b.escapeHtml(a.name)}</h3>
+                <p class="card-date">${n}</p>
+              </div>
+              <div class="card-actions">
+                <button class="action-btn view-btn" data-id="${a.id}" title="Ansehen">
+                  <i data-lucide="eye"></i>
+                </button>
+                ${t?`
+                <button class="action-btn delete-btn" data-id="${a.id}" title="Loeschen">
+                  <i data-lucide="trash-2"></i>
+                </button>
+                `:""}
+              </div>
+            </div>
+          `}).join("")}
+      </div>
+    `}static escapeHtml(e){const t=document.createElement("div");return t.textContent=e,t.innerHTML}static init(){window.lucide&&lucide.createIcons()}}class C{constructor(e,t){y(this,"site");y(this,"onClose");this.site=e,this.onClose=t}open(){var a;const e=document.querySelector(".app-container");if(!e)return;const t=document.createElement("div");t.className="viewer-overlay",t.innerHTML=this.render(),e.appendChild(t),window.lucide&&lucide.createIcons();const s=document.getElementById("site-iframe"),i=document.getElementById("iframe-loader");if(s&&this.site.content){s.onload=()=>{i==null||i.classList.add("hidden"),s.classList.add("loaded");try{const o=s.contentDocument;o&&(o.documentElement.style.backgroundColor="#0a0a0f",o.body.style.backgroundColor="#0a0a0f")}catch{}};const n=getComputedStyle(document.documentElement).getPropertyValue("--bg-deep")||"#0a0a0f",l=getComputedStyle(document.documentElement).getPropertyValue("--accent")||"#c9a227",d=getComputedStyle(document.documentElement).getPropertyValue("--border-accent")||"#333";s.srcdoc=`<html><body style="background:${n};margin:0;display:flex;align-items:center;justify-content:center;height:100vh;">
+        <div style="width:48px;height:48px;border:3px solid ${d};border-top-color:${l};border-radius:50%;animation:spin 1s linear infinite;"></div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+      </body></html>`,setTimeout(()=>{s.srcdoc=this.site.content},100)}(a=document.getElementById("viewer-close"))==null||a.addEventListener("click",()=>{t.remove(),this.onClose()}),t.addEventListener("click",n=>{n.target===t&&(t.remove(),this.onClose())}),document.addEventListener("keydown",n=>{n.key==="Escape"&&(t.remove(),this.onClose())})}render(){return`
+      <div class="viewer-container">
+        <div class="viewer-glow-border">
+          <div class="viewer-header">
+            <button class="viewer-back" id="viewer-close">
+              <i data-lucide="arrow-left"></i>
+              <span>Back</span>
+            </button>
+            <h2 class="viewer-title">${this.site.name}</h2>
+            <div style="width: 80px;"></div>
+          </div>
+          <div class="viewer-frame">
+            <div class="iframe-loader" id="iframe-loader">
+              <div class="loader-spinner"></div>
+            </div>
+            <iframe id="site-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
+          </div>
+        </div>
+      </div>
+    `}}class x{static render(e,t,s,i,a,n,l,d,o){return`
+      <header class="header">
+        <div class="header-content">
+          <div class="logo">
+            <i data-lucide="layout-grid"></i>
+            <h1>Site Grid</h1>
+          </div>
+          <div class="header-right">
+            <div class="user-info">
+              <span class="role-badge ${e}">${t}</span>
+            </div>
+            <button class="icon-btn" id="grid-size-btn" title="Grid Size">
+              <i data-lucide="layout-grid"></i>
+            </button>
+            <button class="icon-btn" id="leaderboard-btn" title="Leaderboard">
+              <i data-lucide="bar-chart-3"></i>
+            </button>
+            <button class="icon-btn" id="export-btn" title="Export Sites">
+              <i data-lucide="download"></i>
+            </button>
+            ${e==="admin"?`
+            <button class="icon-btn" id="users-btn" title="User Management">
+              <i data-lucide="users"></i>
+            </button>
+            <button class="icon-btn" id="tags-btn" title="Manage Tags">
+              <i data-lucide="tag"></i>
+            </button>
+            `:""}
+            <button class="icon-btn" id="settings-btn" title="Settings">
+              <i data-lucide="settings"></i>
+            </button>
+            <button class="icon-btn logout-btn" id="logout-btn" title="Logout">
+              <i data-lucide="log-out"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+    `}static init(){window.lucide&&lucide.createIcons()}}class T{static render(){return`
+      <div class="search-container">
+        <i data-lucide="search" class="search-icon"></i>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Sites durchsuchen..."
+          id="search-input"
+        >
+      </div>
+    `}static init(){window.lucide&&lucide.createIcons()}}class E{static render(){return`
+      <div class="login-bg">
+        <div class="bg-orb orb-1"></div>
+        <div class="bg-orb orb-2"></div>
+      </div>
+      
+      <div class="login-form-card" id="login-card">
+        <div class="card-glow" id="card-glow"></div>
+        <div class="form-inner">
+          <div class="form-logo">
+            <i data-lucide="layout-grid"></i>
+          </div>
+          
+          <h2>Welcome to Grid-View</h2>
+          
+          <div class="field">
+            <i data-lucide="user" class="field-icon"></i>
+            <input 
+              type="text" 
+              id="login-username" 
+              placeholder="Username"
+              autocomplete="username"
+            >
+          </div>
+          
+          <div class="field">
+            <i data-lucide="lock" class="field-icon"></i>
+            <input 
+              type="password" 
+              id="login-password" 
+              placeholder="Password"
+              autocomplete="current-password"
+            >
+          </div>
+          
+          <button class="submit-btn" id="btn-login">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-loader"></span>
+          </button>
+          
+          <div class="login-toggle">
+            <span id="toggle-text">New user?</span>
+            <button id="btn-toggle">Create account</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="login-error" id="login-error"></div>
+    `}static init(e){window.lucide&&lucide.createIcons();const t=document.getElementById("login-username"),s=document.getElementById("login-password"),i=document.getElementById("btn-login"),a=i.querySelector(".btn-text"),n=document.getElementById("btn-toggle"),l=document.getElementById("toggle-text"),d=document.getElementById("login-error"),o=document.getElementById("login-card"),u=document.getElementById("card-glow");let m=!1;o==null||o.addEventListener("mousemove",r=>{if(!o||!u)return;const c=o.getBoundingClientRect(),p=r.clientX-c.left,S=r.clientY-c.top;u.style.background=`radial-gradient(circle at ${p}px ${S}px, var(--glow) 0%, transparent 50%)`,u.style.opacity="1"}),o==null||o.addEventListener("mouseleave",()=>{u&&(u.style.opacity="0")});const w=()=>{m=!m,m?(a.textContent="Create Account",l.textContent="Have an account?",n.textContent="Sign in"):(a.textContent="Sign In",l.textContent="New user?",n.textContent="Create account"),d.classList.remove("show")},f=async()=>{const r=t.value.trim(),c=s.value;if(!r){t.classList.add("shake"),d.textContent="Enter username",d.classList.add("show"),setTimeout(()=>t.classList.remove("shake"),400);return}if(!c){s.classList.add("shake"),d.textContent="Enter password",d.classList.add("show"),setTimeout(()=>s.classList.remove("shake"),400);return}i.classList.add("loading"),i.disabled=!0,d.classList.remove("show");try{await e(r,c,m)}catch(p){d.textContent=p instanceof Error?p.message:"Something went wrong",d.classList.add("show"),i.classList.remove("loading"),i.disabled=!1}};i==null||i.addEventListener("click",f),n==null||n.addEventListener("click",w),s==null||s.addEventListener("keydown",r=>{r.key==="Enter"&&f()}),t==null||t.addEventListener("input",()=>{d.classList.remove("show")}),setTimeout(()=>t==null?void 0:t.focus(),100)}}const L={accentColor:"#c9a227",gridSize:"normal"};class v{static load(){const e=localStorage.getItem("site-grid-settings");return e?{...L,...JSON.parse(e)}:{...L}}static save(e){localStorage.setItem("site-grid-settings",JSON.stringify(e)),this.apply(e)}static apply(e){const t=e.accentColor.replace("#",""),s=parseInt(t.slice(0,2),16),i=parseInt(t.slice(2,4),16),a=parseInt(t.slice(4,6),16);document.documentElement.style.setProperty("--accent",e.accentColor),document.documentElement.style.setProperty("--glow",`rgba(${s}, ${i}, ${a}, 0.4)`),document.documentElement.style.setProperty("--glow-warm",`rgba(${s}, ${i}, ${a}, 0.5)`);const n=Math.max(0,s-20),l=Math.max(0,i-30),d=Math.max(0,a-30);document.documentElement.style.setProperty("--accent-warm",`rgb(${n}, ${l}, ${d})`);const o=Math.max(0,s-80),u=Math.min(255,i+30),m=Math.min(255,a+30);document.documentElement.style.setProperty("--accent-sage",`rgb(${o}, ${u}, ${m})`),document.documentElement.style.setProperty("--bg-accent-tint",`rgba(${s}, ${i}, ${a}, 0.06)`),document.documentElement.style.setProperty("--glass-tint",`rgba(${s}, ${i}, ${a}, 0.12)`),document.documentElement.style.setProperty("--border-accent",`rgba(${s}, ${i}, ${a}, 0.4)`),document.documentElement.style.setProperty("--cursor-glow",`rgba(${s}, ${i}, ${a}, 0.4)`)}static render(e){return`
+      <div class="settings-popup">
+        <h3>Settings</h3>
+        
+        <div class="settings-row">
+          <label>Accent Color</label>
+          <div class="color-picker-row">
+            <input type="color" id="accent-color" value="${e.accentColor}">
+            <span>${e.accentColor.toUpperCase()}</span>
+          </div>
+        </div>
+        
+        <div class="settings-presets">
+          <button class="preset" data-color="#c9a227" style="background: #c9a227;" title="Gold"></button>
+          <button class="preset" data-color="#e07020" style="background: #e07020;" title="Copper"></button>
+          <button class="preset" data-color="#5a8a6a" style="background: #5a8a6a;" title="Sage"></button>
+          <button class="preset" data-color="#c04040" style="background: #c04040;" title="Crimson"></button>
+          <button class="preset" data-color="#4080c0" style="background: #4080c0;" title="Steel"></button>
+          <button class="preset" data-color="#8060c0" style="background: #8060c0;" title="Amethyst"></button>
+        </div>
+        
+        <div class="settings-row">
+          <label>Grid Size</label>
+          <div class="grid-size-options">
+            <button class="grid-option ${e.gridSize==="small"?"active":""}" data-size="small">S</button>
+            <button class="grid-option ${e.gridSize==="normal"?"active":""}" data-size="normal">M</button>
+            <button class="grid-option ${e.gridSize==="large"?"active":""}" data-size="large">L</button>
+          </div>
+        </div>
+        
+        <button class="settings-close" id="settings-close"><i data-lucide="x"></i> Close</button>
+      </div>
+    `}static init(e){window.lucide&&lucide.createIcons();const t=document.querySelector(".settings-popup"),s=document.getElementById("settings-close"),i=document.getElementById("accent-color"),a=document.querySelector(".settings-overlay"),n=document.querySelectorAll(".preset"),l=document.querySelectorAll(".grid-option");s==null||s.addEventListener("click",()=>a==null?void 0:a.remove()),i==null||i.addEventListener("input",d=>{const o=d.target.value,u=t==null?void 0:t.querySelector(".color-picker-row span");u&&(u.textContent=o.toUpperCase());const m=v.load();e({...m,accentColor:o})}),n.forEach(d=>{d.addEventListener("click",()=>{const o=d.dataset.color;i&&(i.value=o);const u=t==null?void 0:t.querySelector(".color-picker-row span");u&&(u.textContent=o.toUpperCase());const m=v.load();e({...m,accentColor:o})})}),l.forEach(d=>{d.addEventListener("click",()=>{const o=d.dataset.size,u=v.load();e({...u,gridSize:o}),l.forEach(m=>m.classList.remove("active")),d.classList.add("active"),document.body.className=`grid-${o}`})})}}const g="http://localhost:3000/api";class q{constructor(){y(this,"session",null);y(this,"settings",{accentColor:"#c9a227",gridSize:"normal"});y(this,"sites",[]);y(this,"filteredSites",[]);y(this,"tags",[]);y(this,"searchQuery","");y(this,"viewer",null);this.settings=v.load(),v.apply(this.settings),this.initCursorGlow(),this.loadTags(),this.checkSession()}getAuthHeaders(){var e;return{Authorization:`Bearer ${((e=this.session)==null?void 0:e.token)??""}`,"Content-Type":"application/json"}}async apiRequest(e,t={}){const s=await fetch(e,{...t,headers:{...this.getAuthHeaders(),...t.headers}});if(!s.ok){const i=await s.json().catch(()=>({error:"Request failed"}));throw new Error(i.error||`HTTP ${s.status}`)}return s.json()}async checkSession(){const e=localStorage.getItem("site-grid-session");if(e)try{this.session=JSON.parse(e),await this.loadSites(),this.render();return}catch{}this.clearSession(),this.renderLogin()}clearSession(){this.session=null,localStorage.removeItem("site-grid-session")}initCursorGlow(){if(document.querySelector(".cursor-glow"))return;const e=document.createElement("div");e.className="cursor-glow",document.body.appendChild(e),document.addEventListener("mousemove",t=>{e.style.left=`${t.clientX}px`,e.style.top=`${t.clientY}px`})}async loadTags(){try{this.tags=await fetch(`${g}/tags`).then(e=>e.json())}catch{this.tags=[]}}async loadSites(){try{this.sites=await this.apiRequest(`${g}/sites`),this.filterSites()}catch{this.clearSession(),this.renderLogin()}}filterSites(){const e=this.searchQuery.toLowerCase();this.filteredSites=this.sites.filter(t=>{var s;return t.name.toLowerCase().includes(e)||((s=t.content)==null?void 0:s.toLowerCase().includes(e))})}createOverlay(e){const t=document.createElement("div");return t.className="settings-overlay",t.innerHTML=e,document.body.appendChild(t),t.addEventListener("click",s=>{s.target===t&&t.remove()}),t}showSettings(){var t;if(document.querySelector(".settings-overlay"))return;const e=this.createOverlay(v.render(this.settings));v.init(s=>{this.settings=s,v.save(s),v.apply(s)}),(t=document.getElementById("settings-close"))==null||t.addEventListener("click",()=>e.remove())}showLeaderboard(){var t;if(document.querySelector(".settings-overlay"))return;const e=this.createOverlay('<div class="settings-popup"><h3>Leaderboard</h3><div class="leaderboard-list" id="leaderboard-list"><div class="loading">Loading...</div></div><button class="settings-close" id="settings-close">Close</button></div>');(t=document.getElementById("settings-close"))==null||t.addEventListener("click",()=>e.remove()),fetch(`${g}/leaderboard`).then(s=>s.json()).then(s=>{const i=document.getElementById("leaderboard-list");i&&(i.innerHTML=s.length?s.map((a,n)=>`<div class="leaderboard-item ${n===0?"gold":n===1?"silver":n===2?"bronze":""}"><span class="rank">#${n+1}</span><span class="name">${a.username}</span><span class="visits">${a.visits} visits</span></div>`).join(""):'<div class="empty">No visits yet</div>')})}showUserManagement(){var t,s;if(((t=this.session)==null?void 0:t.role)!=="admin"||document.querySelector(".settings-overlay"))return;const e=this.createOverlay('<div class="settings-popup user-management"><h3>User Management</h3><div class="user-list" id="user-list"><div class="loading">Loading...</div></div><button class="settings-close" id="settings-close">Close</button></div>');(s=document.getElementById("settings-close"))==null||s.addEventListener("click",()=>e.remove()),this.loadUserList()}async loadUserList(){const e=document.getElementById("user-list");if(e)try{const t=await this.apiRequest(`${g}/admin/users`);e.innerHTML=t.map(s=>`<div class="user-item"><div class="user-info"><span class="user-name">${s.username}</span><span class="user-role ${s.role}">${s.role}</span></div><div class="user-stats">${s.visits} visits</div><div class="user-actions">${s.role!=="admin"?`<button class="user-btn promote" data-id="${s.id}">Promote</button>`:""}<button class="user-btn delete" data-id="${s.id}">Delete</button></div></div>`).join(""),e.querySelectorAll(".promote").forEach(s=>s.addEventListener("click",()=>void this.promoteUser(s.dataset.id))),e.querySelectorAll(".delete").forEach(s=>s.addEventListener("click",()=>void this.deleteUser(s.dataset.id)))}catch{e.innerHTML='<div class="error">Failed</div>'}}async promoteUser(e){if(confirm("Promote?"))try{await this.apiRequest(`${g}/admin/users/${e}`,{method:"PUT",body:JSON.stringify({role:"admin"})}),this.loadUserList()}catch(t){alert(t instanceof Error?t.message:"Error")}}async deleteUser(e){if(confirm("Delete?"))try{await this.apiRequest(`${g}/admin/users/${e}`,{method:"DELETE"}),this.loadUserList()}catch(t){alert(t instanceof Error?t.message:"Error")}}showTags(){var t,s,i;if(((t=this.session)==null?void 0:t.role)!=="admin"||document.querySelector(".settings-overlay"))return;const e=this.createOverlay('<div class="settings-popup"><h3>Manage Tags</h3><div class="tags-list" id="tags-list"></div><div class="add-tag"><input type="text" id="new-tag-name" placeholder="Tag name"><input type="color" id="new-tag-color" value="#c9a227"><button id="add-tag-btn">Add</button></div><button class="settings-close" id="settings-close">Close</button></div>');(s=document.getElementById("settings-close"))==null||s.addEventListener("click",()=>e.remove()),this.renderTags(),(i=document.getElementById("add-tag-btn"))==null||i.addEventListener("click",async()=>{var l,d;const a=(l=document.getElementById("new-tag-name"))==null?void 0:l.value,n=(d=document.getElementById("new-tag-color"))==null?void 0:d.value;a&&(await fetch(`${g}/tags`,{method:"POST",headers:this.getAuthHeaders(),body:JSON.stringify({name:a,color:n})}),this.tags=await fetch(`${g}/tags`).then(o=>o.json()),this.renderTags())})}async renderTags(){const e=document.getElementById("tags-list");e&&(e.innerHTML=this.tags.map(t=>`<div class="tag-item"><span class="tag-dot" style="background:${t.color}"></span><span>${t.name}</span><button class="tag-delete" data-id="${t.id}">X</button></div>`).join(""),e.querySelectorAll(".tag-delete").forEach(t=>t.addEventListener("click",async()=>{await fetch(`${g}/tags/${t.dataset.id}`,{method:"DELETE",headers:this.getAuthHeaders()}),this.tags=await fetch(`${g}/tags`).then(s=>s.json()),this.renderTags()})))}toggleGridSize(){const e=["small","normal","large"],t=e.indexOf(this.settings.gridSize||"normal");this.settings.gridSize=e[(t+1)%e.length],v.save(this.settings),document.body.className=`grid-${this.settings.gridSize}`}async exportZip(){window.open(`${g}/export`,"_blank")}escapeHtml(e){const t=document.createElement("div");return t.textContent=e,t.innerHTML}renderLogin(){const e=document.getElementById("app");e&&(e.innerHTML=E.render(),E.init(this.handleAuth.bind(this)))}async handleAuth(e,t,s){try{const i=await this.apiRequest(`${g}/auth/${s?"register":"login"}`,{method:"POST",body:JSON.stringify({username:e,password:t})});this.session={token:i.token,role:i.role,username:i.username,userId:i.id},localStorage.setItem("site-grid-session",JSON.stringify(this.session)),await this.loadSites(),await this.loadTags(),this.render()}catch(i){throw i}}async handleLogout(){this.clearSession(),this.sites=[],this.filteredSites=[],this.viewer=null,this.renderLogin()}render(){var t,s,i,a;const e=document.getElementById("app");e&&(document.body.className=`grid-${this.settings.gridSize||"normal"}`,e.innerHTML=`
+      <div class="app-container">
+        ${x.render(((t=this.session)==null?void 0:t.role)??"user",((s=this.session)==null?void 0:s.username)??"User",this.handleLogout.bind(this),this.showSettings.bind(this),this.showLeaderboard.bind(this),((i=this.session)==null?void 0:i.role)==="admin"?this.showUserManagement.bind(this):void 0,this.toggleGridSize.bind(this),this.showTags.bind(this),this.exportZip.bind(this))}
+        <div class="main-content">
+          <div class="left-panel">
+            ${T.render()}
+            <div class="grid-section">
+              ${b.render(this.filteredSites,((a=this.session)==null?void 0:a.role)==="admin",this.tags,()=>{var n;return(n=document.querySelector("#file-input"))==null?void 0:n.click()})}
+            </div>
+          </div>
+          <aside class="sidebar-panel">
+            <div class="stats-card">
+              <h4><i data-lucide="bar-chart-3"></i> Statistics</h4>
+              <div class="stats-grid" id="stats-grid">
+                <div class="stat-item"><span class="stat-value" id="stat-logins">-</span><span class="stat-label">Logins</span></div>
+                <div class="stat-item"><span class="stat-value" id="stat-users">-</span><span class="stat-label">Users</span></div>
+                <div class="stat-item"><span class="stat-value" id="stat-sites">-</span><span class="stat-label">Sites</span></div>
+              </div>
+            </div>
+            <div class="sidebar-separator"></div>
+            <div class="leaderboard-card">
+              <h4><i data-lucide="trophy"></i> Top Users</h4>
+              <div class="sidebar-leaderboard" id="sidebar-leaderboard"><div class="loading">Loading...</div></div>
+            </div>
+          </aside>
+        </div>
+        ${this.viewer?this.viewer.render():""}
+      </div>
+    `,this.attachEventListeners(),this.loadSidebarData())}attachEventListeners(){var a,n,l,d,o,u,m,w,f;window.lucide&&lucide.createIcons();const e=document.getElementById("app");if(!e)return;(a=e.querySelector("#logout-btn"))==null||a.addEventListener("click",()=>this.handleLogout()),(n=e.querySelector("#settings-btn"))==null||n.addEventListener("click",()=>this.showSettings()),(l=e.querySelector("#leaderboard-btn"))==null||l.addEventListener("click",()=>this.showLeaderboard()),(d=e.querySelector("#grid-size-btn"))==null||d.addEventListener("click",()=>this.toggleGridSize()),(o=e.querySelector("#grid-upload-btn"))==null||o.addEventListener("click",()=>{var r;return(r=document.querySelector("#file-input"))==null?void 0:r.click()}),(u=e.querySelector("#users-btn"))==null||u.addEventListener("click",()=>this.showUserManagement()),(m=e.querySelector("#tags-btn"))==null||m.addEventListener("click",()=>this.showTags()),(w=e.querySelector("#export-btn"))==null||w.addEventListener("click",()=>this.exportZip());const t=e.querySelector(".search-input");t==null||t.addEventListener("input",r=>{this.searchQuery=r.target.value,this.filterSites(),this.updateGrid()}),e.querySelectorAll(".delete-btn").forEach(r=>r.addEventListener("click",c=>{var p;c.stopPropagation(),((p=this.session)==null?void 0:p.role)==="admin"&&this.handleDelete(r.dataset.id)})),e.querySelectorAll(".view-btn, .site-card").forEach(r=>r.addEventListener("click",()=>void this.handleView(r.dataset.id)));const s=e.querySelector("#file-input");s==null||s.addEventListener("change",async r=>{const c=r.target.files;c!=null&&c.length&&(await this.handleUploadMultiple(Array.from(c)),s.value="")});const i=e.querySelector(".uploader");i==null||i.addEventListener("dragover",r=>{r.preventDefault(),i.classList.add("drag-over")}),i==null||i.addEventListener("dragleave",()=>i.classList.remove("drag-over")),i==null||i.addEventListener("drop",async r=>{var p;r.preventDefault(),i.classList.remove("drag-over");const c=(p=r.dataTransfer)==null?void 0:p.files;c!=null&&c.length&&await this.handleUploadMultiple(Array.from(c))}),(f=e.querySelector("#back-btn"))==null||f.addEventListener("click",()=>{this.viewer=null,this.render()}),document.addEventListener("keydown",r=>{var c;r.target instanceof HTMLInputElement||(r.key==="/"&&(r.preventDefault(),t==null||t.focus()),(r.key==="n"||r.key==="N")&&(r.preventDefault(),(c=document.querySelector("#file-input"))==null||c.click()))})}async loadSidebarData(){try{const t=await fetch(`${g}/stats`).then(s=>s.json());document.getElementById("stat-logins").textContent=String(t.totalLogins),document.getElementById("stat-users").textContent=String(t.totalUsers),document.getElementById("stat-sites").textContent=String(t.totalSites)}catch{}const e=document.getElementById("sidebar-leaderboard");if(e)try{const t=await fetch(`${g}/leaderboard?limit=5`).then(s=>s.json());e.innerHTML=t.length?t.map((s,i)=>`<div class="sidebar-item ${i===0?"gold":i===1?"silver":i===2?"bronze":""}"><span class="sidebar-rank">${i+1}</span><span class="sidebar-name">${s.username}</span><span class="sidebar-visits">${s.visits}</span></div>`).join(""):'<div class="empty">No visits</div>'}catch{e.innerHTML='<div class="empty">Failed</div>'}}updateGrid(){var t;const e=document.querySelector(".grid-section");e&&(e.innerHTML=b.render(this.filteredSites,((t=this.session)==null?void 0:t.role)==="admin",this.tags,()=>{var s;return(s=document.querySelector("#file-input"))==null?void 0:s.click()}),this.attachEventListeners())}async handleUpload(e){if(this.session)try{const t=await e.text();await this.apiRequest(`${g}/sites`,{method:"POST",body:JSON.stringify({name:e.name.replace(/\.(html?)$/i,""),content:t})}),await this.loadSites(),this.render()}catch(t){console.error(t),alert("Upload failed")}}async handleUploadMultiple(e){if(!this.session||e.length===0)return;let t=0,s=0;for(const i of e)try{const a=await i.text();await this.apiRequest(`${g}/sites`,{method:"POST",body:JSON.stringify({name:i.name.replace(/\.(html?)$/i,""),content:a})}),t++}catch{s++}await this.loadSites(),this.render(),s>0?alert(`${t} uploaded, ${s} failed`):t>1&&alert(`${t} files uploaded`)}async handleDelete(e){if(confirm("Delete?"))try{await this.apiRequest(`${g}/sites/${e}`,{method:"DELETE"}),this.sites=this.sites.filter(t=>t.id!==e),this.filterSites(),this.render()}catch(t){console.error(t)}}async handleView(e){if(this.session)try{const t=await this.apiRequest(`${g}/sites/${e}`);this.viewer=new C(t,()=>{this.viewer=null,this.render()}),this.viewer.open()}catch(t){console.error(t)}}}document.addEventListener("DOMContentLoaded",()=>new q);

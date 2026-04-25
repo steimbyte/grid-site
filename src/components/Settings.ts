@@ -1,9 +1,11 @@
 export interface Settings {
   accentColor: string;
+  gridSize?: 'small' | 'normal' | 'large';
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  accentColor: '#c9a227'
+  accentColor: '#c9a227',
+  gridSize: 'normal'
 };
 
 export class Settings {
@@ -23,32 +25,20 @@ export class Settings {
     const g = parseInt(hex.slice(2, 4), 16);
     const b = parseInt(hex.slice(4, 6), 16);
 
-    // Main accent
     document.documentElement.style.setProperty('--accent', settings.accentColor);
-    
-    // Glow color
     document.documentElement.style.setProperty('--glow', `rgba(${r}, ${g}, ${b}, 0.4)`);
-    
-    // Warm accent (shifted hue)
-    const warmR = Math.min(255, r + 30);
-    const warmG = Math.max(0, g - 50);
-    const warmB = Math.max(0, b - 30);
+    document.documentElement.style.setProperty('--glow-warm', `rgba(${r}, ${g}, ${b}, 0.5)`);
+
+    const warmR = Math.max(0, r - 20), warmG = Math.max(0, g - 30), warmB = Math.max(0, b - 30);
     document.documentElement.style.setProperty('--accent-warm', `rgb(${warmR}, ${warmG}, ${warmB})`);
-    
-    // Sage accent
-    const sageR = Math.max(0, r - 100);
-    const sageG = Math.min(255, g + 40);
-    const sageB = Math.min(255, b + 20);
+
+    const sageR = Math.max(0, r - 80), sageG = Math.min(255, g + 30), sageB = Math.min(255, b + 30);
     document.documentElement.style.setProperty('--accent-sage', `rgb(${sageR}, ${sageG}, ${sageB})`);
 
-    // Background tint - subtle accent in atmosphere
-    document.documentElement.style.setProperty('--bg-accent-tint', `rgba(${r}, ${g}, ${b}, 0.05)`);
-    
-    // Glass tint - colored glass
-    document.documentElement.style.setProperty('--glass-tint', `rgba(${r}, ${g}, ${b}, 0.08)`);
-    
-    // Border glow
-    document.documentElement.style.setProperty('--border-accent', `rgba(${r}, ${g}, ${b}, 0.3)`);
+    document.documentElement.style.setProperty('--bg-accent-tint', `rgba(${r}, ${g}, ${b}, 0.06)`);
+    document.documentElement.style.setProperty('--glass-tint', `rgba(${r}, ${g}, ${b}, 0.12)`);
+    document.documentElement.style.setProperty('--border-accent', `rgba(${r}, ${g}, ${b}, 0.4)`);
+    document.documentElement.style.setProperty('--cursor-glow', `rgba(${r}, ${g}, ${b}, 0.4)`);
   }
 
   static render(settings: Settings): string {
@@ -73,7 +63,16 @@ export class Settings {
           <button class="preset" data-color="#8060c0" style="background: #8060c0;" title="Amethyst"></button>
         </div>
         
-        <button class="settings-close" id="settings-close">Close</button>
+        <div class="settings-row">
+          <label>Grid Size</label>
+          <div class="grid-size-options">
+            <button class="grid-option ${settings.gridSize === 'small' ? 'active' : ''}" data-size="small">S</button>
+            <button class="grid-option ${settings.gridSize === 'normal' ? 'active' : ''}" data-size="normal">M</button>
+            <button class="grid-option ${settings.gridSize === 'large' ? 'active' : ''}" data-size="large">L</button>
+          </div>
+        </div>
+        
+        <button class="settings-close" id="settings-close"><i data-lucide="x"></i> Close</button>
       </div>
     `;
   }
@@ -84,6 +83,7 @@ export class Settings {
     const colorInput = document.getElementById('accent-color') as HTMLInputElement;
     const overlay = document.querySelector('.settings-overlay') as HTMLElement;
     const presets = document.querySelectorAll('.preset');
+    const gridOptions = document.querySelectorAll('.grid-option');
 
     closeBtn?.addEventListener('click', () => overlay?.remove());
     
@@ -91,7 +91,8 @@ export class Settings {
       const val = (e.target as HTMLInputElement).value;
       const span = popup?.querySelector('.color-picker-row span');
       if (span) span.textContent = val.toUpperCase();
-      onSave({ accentColor: val });
+      const current = Settings.load();
+      onSave({ ...current, accentColor: val });
     });
 
     presets.forEach(btn => {
@@ -100,7 +101,19 @@ export class Settings {
         if (colorInput) colorInput.value = color;
         const span = popup?.querySelector('.color-picker-row span');
         if (span) span.textContent = color.toUpperCase();
-        onSave({ accentColor: color });
+        const current = Settings.load();
+        onSave({ ...current, accentColor: color });
+      });
+    });
+
+    gridOptions.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const size = (btn as HTMLElement).dataset.size as 'small' | 'normal' | 'large';
+        const current = Settings.load();
+        onSave({ ...current, gridSize: size });
+        gridOptions.forEach(o => o.classList.remove('active'));
+        btn.classList.add('active');
+        document.body.className = `grid-${size}`;
       });
     });
   }

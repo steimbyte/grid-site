@@ -1,3 +1,7 @@
+/**
+ * Site Grid - Main Application
+ */
+
 import { FileUploader } from './components/FileUploader';
 import { SiteGrid } from './components/SiteGrid';
 import { SiteViewer } from './components/SiteViewer';
@@ -6,40 +10,41 @@ import { SearchBar } from './components/SearchBar';
 import { LoginScreen } from './components/LoginScreen';
 import { Settings } from './components/Settings';
 
-interface Site {
-  id: string;
-  name: string;
-  content?: string;
-  uploadedAt: string;
-}
-
-interface Session {
-  token: string;
-  role: 'guest' | 'admin';
-  username: string;
-}
-
-interface LeaderboardEntry {
-  username: string;
-  visits: number;
-  role: string;
-}
+interface Site { id: string; name: string; content?: string; uploadedAt: string; uploadedBy?: string; views?: number; tags?: Tag[]; icon?: string; }
+interface User { id: string; username: string; role: 'user' | 'admin'; visits: number; }
+interface Tag { id: string; name: string; color: string; }
+interface Session { token: string; role: 'user' | 'admin'; username: string; userId: string; }
 
 const API = 'http://localhost:3000/api';
 
 class App {
   private session: Session | null = null;
-  private settings: Settings = { accentColor: '#c9a227' };
+  private settings: Settings = { accentColor: '#c9a227', gridSize: 'normal' as 'small' | 'normal' | 'large' };
   private sites: Site[] = [];
   private filteredSites: Site[] = [];
-  private searchQuery: string = '';
+  private tags: Tag[] = [];
+  private searchQuery = '';
   private viewer: SiteViewer | null = null;
 
   constructor() {
     this.settings = Settings.load();
     Settings.apply(this.settings);
     this.initCursorGlow();
-    this.checkSession();
+    this.loadTags();
+    void this.checkSession();
+  }
+
+  private getAuthHeaders(): HeadersInit {
+    return { 'Authorization': `Bearer ${this.session?.token ?? ''}`, 'Content-Type': 'application/json' };
+  }
+
+  private async apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
+    const res = await fetch(url, { ...options, headers: { ...this.getAuthHeaders(), ...options.headers } });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
   }
 
   private async checkSession(): Promise<void> {
@@ -47,360 +52,355 @@ class App {
     if (saved) {
       try {
         this.session = JSON.parse(saved);
-        const res = await fetch(`${API}/sites`, {
-          headers: { 'X-Auth-Token': this.session!.token }
-        });
-        if (res.ok) {
-          this.sites = await res.json();
-          this.filteredSites = [...this.sites];
-          this.render();
-          return;
-        }
-      } catch {
-        // Invalid session
-      }
-      this.session = null;
-      localStorage.removeItem('site-grid-session');
+        await this.loadSites();
+        this.render();
+        return;
+      } catch { /* invalid */ }
     }
+    this.clearSession();
     this.renderLogin();
   }
 
-  private saveSession(): void {
-    if (this.session) {
-      localStorage.setItem('site-grid-session', JSON.stringify(this.session));
-    } else {
-      localStorage.removeItem('site-grid-session');
-    }
+  private clearSession(): void {
+    this.session = null;
+    localStorage.removeItem('site-grid-session');
   }
 
   private initCursorGlow(): void {
-    const existing = document.querySelector('.cursor-glow');
-    if (existing) return;
-    
+    if (document.querySelector('.cursor-glow')) return;
     const glow = document.createElement('div');
     glow.className = 'cursor-glow';
     document.body.appendChild(glow);
+    document.addEventListener('mousemove', (e) => { glow.style.left = `${e.clientX}px`; glow.style.top = `${e.clientY}px`; });
+  }
 
-    document.addEventListener('mousemove', (e) => {
-      glow.style.left = `${e.clientX}px`;
-      glow.style.top = `${e.clientY}px`;
-    });
+  private async loadTags(): Promise<void> {
+    try { this.tags = await fetch(`${API}/tags`).then(r => r.json()); } catch { this.tags = []; }
+  }
+
+  private async loadSites(): Promise<void> {
+    try { this.sites = await this.apiRequest<Site[]>(`${API}/sites`); this.filterSites(); } catch { this.clearSession(); this.renderLogin(); }
   }
 
   private filterSites(): void {
-    if (!this.searchQuery) {
-      this.filteredSites = [...this.sites];
-    } else {
-      const query = this.searchQuery.toLowerCase();
-      this.filteredSites = this.sites.filter(site =>
-        site.name.toLowerCase().includes(query)
-      );
-    }
+    const q = this.searchQuery.toLowerCase();
+    this.filteredSites = this.sites.filter(s => 
+      s.name.toLowerCase().includes(q) || s.content?.toLowerCase().includes(q)
+    );
+  }
+
+  private createOverlay(content: string): HTMLDivElement {
+    const overlay = document.createElement('div');
+    overlay.className = 'settings-overlay';
+    overlay.innerHTML = content;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    return overlay;
   }
 
   private showSettings(): void {
-    const existing = document.querySelector('.settings-overlay');
-    if (existing) return;
-
-    const overlay = document.createElement('div');
-    overlay.className = 'settings-overlay';
-    document.body.appendChild(overlay);
-
-    overlay.innerHTML = Settings.render(this.settings);
-    Settings.init((s) => {
-      this.settings = s;
-      Settings.save(s);
-    });
-
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
-    });
+    if (document.querySelector('.settings-overlay')) return;
+    const overlay = this.createOverlay(Settings.render(this.settings));
+    Settings.init((s) => { this.settings = s; Settings.save(s); Settings.apply(s); });
+    document.getElementById('settings-close')?.addEventListener('click', () => overlay.remove());
   }
 
   private showLeaderboard(): void {
-    const existing = document.querySelector('.settings-overlay');
-    if (existing) return;
-
-    const overlay = document.createElement('div');
-    overlay.className = 'settings-overlay';
-    document.body.appendChild(overlay);
-
-    overlay.innerHTML = `
-      <div class="settings-popup">
-        <h3>🏆 Leaderboard</h3>
-        <div class="leaderboard-list" id="leaderboard-list">
-          <div class="leaderboard-loading">Loading...</div>
-        </div>
-        <button class="settings-close" id="settings-close">Close</button>
-      </div>
-    `;
-
+    if (document.querySelector('.settings-overlay')) return;
+    const overlay = this.createOverlay(`<div class="settings-popup"><h3>Leaderboard</h3><div class="leaderboard-list" id="leaderboard-list"><div class="loading">Loading...</div></div><button class="settings-close" id="settings-close">Close</button></div>`);
     document.getElementById('settings-close')?.addEventListener('click', () => overlay.remove());
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
+    fetch(`${API}/leaderboard`).then(r => r.json()).then((data: Array<{username: string; visits: number}>) => {
+      const list = document.getElementById('leaderboard-list');
+      if (!list) return;
+      list.innerHTML = data.length ? data.map((e, i) => `<div class="leaderboard-item ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}"><span class="rank">#${i + 1}</span><span class="name">${e.username}</span><span class="visits">${e.visits} visits</span></div>`).join('') : '<div class="empty">No visits yet</div>';
     });
-
-    // Fetch leaderboard
-    fetch(`${API}/leaderboard`)
-      .then(res => res.json())
-      .then((data: LeaderboardEntry[]) => {
-        const list = document.getElementById('leaderboard-list');
-        if (!list) return;
-
-        if (data.length === 0) {
-          list.innerHTML = '<div class="leaderboard-empty">No visits yet</div>';
-          return;
-        }
-
-        list.innerHTML = data.map((entry, i) => `
-          <div class="leaderboard-item ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">
-            <span class="rank">#${i + 1}</span>
-            <span class="name">${entry.username}</span>
-            <span class="visits">${entry.visits} visits</span>
-          </div>
-        `).join('');
-      })
-      .catch(() => {
-        const list = document.getElementById('leaderboard-list');
-        if (list) list.innerHTML = '<div class="leaderboard-empty">Failed to load</div>';
-      });
   }
 
-  private renderLogin(): void {
-    const app = document.getElementById('app')!;
-    app.innerHTML = LoginScreen.render();
-    LoginScreen.init(this.handleAuth.bind(this));
+  private showUserManagement(): void {
+    if (this.session?.role !== 'admin') return;
+    if (document.querySelector('.settings-overlay')) return;
+    const overlay = this.createOverlay(`<div class="settings-popup user-management"><h3>User Management</h3><div class="user-list" id="user-list"><div class="loading">Loading...</div></div><button class="settings-close" id="settings-close">Close</button></div>`);
+    document.getElementById('settings-close')?.addEventListener('click', () => overlay.remove());
+    void this.loadUserList();
   }
+
+  private async loadUserList(): Promise<void> {
+    const list = document.getElementById('user-list');
+    if (!list) return;
+    try {
+      const users = await this.apiRequest<User[]>(`${API}/admin/users`);
+      list.innerHTML = users.map(u => `<div class="user-item"><div class="user-info"><span class="user-name">${u.username}</span><span class="user-role ${u.role}">${u.role}</span></div><div class="user-stats">${u.visits} visits</div><div class="user-actions">${u.role !== 'admin' ? `<button class="user-btn promote" data-id="${u.id}">Promote</button>` : ''}<button class="user-btn delete" data-id="${u.id}">Delete</button></div></div>`).join('');
+      list.querySelectorAll('.promote').forEach(b => b.addEventListener('click', () => void this.promoteUser((b as HTMLElement).dataset.id!)));
+      list.querySelectorAll('.delete').forEach(b => b.addEventListener('click', () => void this.deleteUser((b as HTMLElement).dataset.id!)));
+    } catch { list.innerHTML = '<div class="error">Failed</div>'; }
+  }
+
+  private async promoteUser(id: string): Promise<void> { if (!confirm('Promote?')) return; try { await this.apiRequest(`${API}/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ role: 'admin' }) }); void this.loadUserList(); } catch (err) { alert(err instanceof Error ? err.message : 'Error'); } }
+  private async deleteUser(id: string): Promise<void> { if (!confirm('Delete?')) return; try { await this.apiRequest(`${API}/admin/users/${id}`, { method: 'DELETE' }); void this.loadUserList(); } catch (err) { alert(err instanceof Error ? err.message : 'Error'); } }
+
+  private showTags(): void {
+    if (this.session?.role !== 'admin') return;
+    if (document.querySelector('.settings-overlay')) return;
+    const overlay = this.createOverlay(`<div class="settings-popup"><h3>Manage Tags</h3><div class="tags-list" id="tags-list"></div><div class="add-tag"><input type="text" id="new-tag-name" placeholder="Tag name"><input type="color" id="new-tag-color" value="#c9a227"><button id="add-tag-btn">Add</button></div><button class="settings-close" id="settings-close">Close</button></div>`);
+    document.getElementById('settings-close')?.addEventListener('click', () => overlay.remove());
+    this.renderTags();
+    document.getElementById('add-tag-btn')?.addEventListener('click', async () => {
+      const name = (document.getElementById('new-tag-name') as HTMLInputElement)?.value;
+      const color = (document.getElementById('new-tag-color') as HTMLInputElement)?.value;
+      if (!name) return;
+      await fetch(`${API}/tags`, { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify({ name, color }) });
+      this.tags = await fetch(`${API}/tags`).then(r => r.json());
+      this.renderTags();
+    });
+  }
+
+  private async renderTags(): Promise<void> {
+    const list = document.getElementById('tags-list');
+    if (!list) return;
+    list.innerHTML = this.tags.map(t => `<div class="tag-item"><span class="tag-dot" style="background:${t.color}"></span><span>${t.name}</span><button class="tag-delete" data-id="${t.id}">X</button></div>`).join('');
+    list.querySelectorAll('.tag-delete').forEach(b => b.addEventListener('click', async () => { await fetch(`${API}/tags/${(b as HTMLElement).dataset.id}`, { method: 'DELETE', headers: this.getAuthHeaders() }); this.tags = await fetch(`${API}/tags`).then(r => r.json()); this.renderTags(); }));
+  }
+
+  private toggleGridSize(): void {
+    const sizes: ('small' | 'normal' | 'large')[] = ['small', 'normal', 'large'];
+    const idx = sizes.indexOf(this.settings.gridSize || 'normal');
+    this.settings.gridSize = sizes[(idx + 1) % sizes.length];
+    Settings.save(this.settings);
+    document.body.className = `grid-${this.settings.gridSize}`;
+  }
+
+  private async exportZip(): Promise<void> {
+    window.open(`${API}/export`, '_blank');
+  }
+
+  private escapeHtml(text: string): string { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+
+  private renderLogin(): void { const app = document.getElementById('app'); if (!app) return; app.innerHTML = LoginScreen.render(); LoginScreen.init(this.handleAuth.bind(this)); }
 
   private async handleAuth(username: string, password: string, isRegister: boolean): Promise<void> {
-    const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
-    
     try {
-      const res = await fetch(`${API}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Auth failed');
-      }
-
-      const data = await res.json();
-      this.session = { 
-        token: data.token, 
-        role: data.role, 
-        username: data.username 
-      };
-      this.saveSession();
-
-      const sitesRes = await fetch(`${API}/sites`, {
-        headers: { 'X-Auth-Token': this.session.token }
-      });
-      this.sites = await sitesRes.json();
-      this.filteredSites = [...this.sites];
-
+      const data = await this.apiRequest<Session & { id: string }>(`${API}/auth/${isRegister ? 'register' : 'login'}`, { method: 'POST', body: JSON.stringify({ username, password }) });
+      this.session = { token: data.token, role: data.role, username: data.username, userId: data.id };
+      localStorage.setItem('site-grid-session', JSON.stringify(this.session));
+      await this.loadSites();
+      await this.loadTags();
       this.render();
-    } catch (err) {
-      throw err; // Let LoginScreen handle the error display
-    }
+    } catch (err) { throw err; }
   }
 
-  private async handleLogout(): Promise<void> {
-    if (this.session) {
-      await fetch(`${API}/auth/logout`, {
-        method: 'POST',
-        headers: { 'X-Auth-Token': this.session.token }
-      });
-    }
-    this.session = null;
-    this.saveSession();
-    this.sites = [];
-    this.filteredSites = [];
-    this.renderLogin();
-  }
+  private async handleLogout(): Promise<void> { this.clearSession(); this.sites = []; this.filteredSites = []; this.viewer = null; this.renderLogin(); }
 
   private render(): void {
-    const app = document.getElementById('app')!;
-    const isAdmin = this.session?.role === 'admin';
+    const app = document.getElementById('app');
+    if (!app) return;
+    document.body.className = `grid-${this.settings.gridSize || 'normal'}`;
 
     app.innerHTML = `
       <div class="app-container">
-        ${Header.render(
-          this.session?.role || 'guest', 
-          this.session?.username || 'User',
-          this.handleLogout.bind(this), 
-          this.showSettings.bind(this),
-          this.showLeaderboard.bind(this)
-        )}        
-        <div class="upload-section">
-          ${SearchBar.render()}
-          ${FileUploader.render()}
+        ${Header.render(this.session?.role ?? 'user', this.session?.username ?? 'User', this.handleLogout.bind(this), this.showSettings.bind(this), this.showLeaderboard.bind(this), this.session?.role === 'admin' ? this.showUserManagement.bind(this) : undefined, this.toggleGridSize.bind(this), this.showTags.bind(this), this.exportZip.bind(this))}
+        <div class="main-content">
+          <div class="left-panel">
+            ${SearchBar.render()}
+            <div class="grid-section">
+              ${SiteGrid.render(this.filteredSites, this.session?.role === 'admin', this.tags)}
+            </div>
+          </div>
+          <aside class="sidebar-panel">
+            <div class="stats-card">
+              <h4><i data-lucide="bar-chart-3"></i> Statistics</h4>
+              <div class="stats-grid" id="stats-grid">
+                <div class="stat-item"><span class="stat-value" id="stat-logins">-</span><span class="stat-label">Logins</span></div>
+                <div class="stat-item"><span class="stat-value" id="stat-users">-</span><span class="stat-label">Users</span></div>
+                <div class="stat-item"><span class="stat-value" id="stat-sites">-</span><span class="stat-label">Sites</span></div>
+              </div>
+            </div>
+            <div class="sidebar-separator"></div>
+            <div class="leaderboard-card">
+              <h4><i data-lucide="trophy"></i> Top Users</h4>
+              <div class="sidebar-leaderboard" id="sidebar-leaderboard"><div class="loading">Loading...</div></div>
+            </div>
+            <div class="sidebar-separator"></div>
+            <div class="upload-card-sidebar" id="sidebar-upload-btn">
+              <i data-lucide="upload"></i>
+              <span>Upload Site</span>
+            </div>
+            ${FileUploader.render()}
+          </aside>
         </div>
-        
-        <div class="grid-section">
-          ${SiteGrid.render(this.filteredSites, isAdmin)}
-        </div>
-        
         ${this.viewer ? this.viewer.render() : ''}
       </div>
     `;
-
     this.attachEventListeners();
+    void this.loadSidebarData();
   }
 
   private attachEventListeners(): void {
-    const app = document.getElementById('app')!;
-
-    const logoutBtn = app.querySelector('#logout-btn');
-    logoutBtn?.addEventListener('click', () => this.handleLogout());
-
-    const settingsBtn = app.querySelector('#settings-btn');
-    settingsBtn?.addEventListener('click', () => this.showSettings());
-
-    const leaderboardBtn = app.querySelector('#leaderboard-btn');
-    leaderboardBtn?.addEventListener('click', () => this.showLeaderboard());
+    // Re-init Lucide icons after dynamic content (only once)
+    if ((window as any).lucide && !document.querySelector('.lucide-create-icons-called')) {
+      (window as any).lucide.createIcons();
+      document.body.classList.add('lucide-create-icons-called');
+    }
+    const app = document.getElementById('app');
+    if (!app) return;
+    app.querySelector('#logout-btn')?.addEventListener('click', () => this.handleLogout());
+    app.querySelector('#settings-btn')?.addEventListener('click', () => this.showSettings());
+    app.querySelector('#leaderboard-btn')?.addEventListener('click', () => this.showLeaderboard());
+    app.querySelector('#grid-size-btn')?.addEventListener('click', () => this.toggleGridSize());
+    app.querySelector('#sidebar-upload-btn')?.addEventListener('click', () => document.querySelector<HTMLInputElement>('#file-input')?.click());
+    app.querySelector('#users-btn')?.addEventListener('click', () => this.showUserManagement());
+    app.querySelector('#tags-btn')?.addEventListener('click', () => this.showTags());
+    app.querySelector('#export-btn')?.addEventListener('click', () => this.exportZip());
 
     const searchInput = app.querySelector('.search-input') as HTMLInputElement;
-    searchInput?.addEventListener('input', (e) => {
-      this.searchQuery = (e.target as HTMLInputElement).value;
-      this.filterSites();
-      this.updateGrid();
-    });
+    searchInput?.addEventListener('input', (e) => { this.searchQuery = (e.target as HTMLInputElement).value; this.filterSites(); this.updateGrid(); });
 
-    app.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (this.session?.role !== 'admin') return;
-        const id = (btn as HTMLElement).dataset.id!;
-        await this.handleDelete(id);
-      });
-    });
-
-    app.querySelectorAll('.view-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const id = (btn as HTMLElement).dataset.id!;
-        await this.handleView(id);
-      });
-    });
-
-    app.querySelectorAll('.site-card').forEach(card => {
-      card.addEventListener('click', async () => {
-        const id = (card as HTMLElement).dataset.id!;
-        await this.handleView(id);
-      });
-    });
+    app.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); if (this.session?.role === 'admin') void this.handleDelete((btn as HTMLElement).dataset.id!); }));
+    app.querySelectorAll('.rename-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); void this.handleRename((btn as HTMLElement).dataset.id!, (btn as HTMLElement).dataset.name!); }));
+    app.querySelectorAll('.icon-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); void this.showIconPicker((btn as HTMLElement).dataset.id!); }));
+    app.querySelectorAll('.view-btn, .site-card').forEach(el => el.addEventListener('click', () => void this.handleView((el as HTMLElement).dataset.id!)));
 
     const fileInput = app.querySelector('#file-input') as HTMLInputElement;
-    fileInput?.addEventListener('change', async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        await this.handleUpload(file);
-        fileInput.value = '';
-      }
-    });
+    fileInput?.addEventListener('change', async (e) => { const files = (e.target as HTMLInputElement).files; if (files?.length) { await this.handleUploadMultiple(Array.from(files)); fileInput.value = ''; } });
 
     const uploader = app.querySelector('.uploader') as HTMLElement;
-    uploader?.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploader.classList.add('drag-over');
-    });
-    uploader?.addEventListener('dragleave', () => {
-      uploader.classList.remove('drag-over');
-    });
-    uploader?.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      uploader.classList.remove('drag-over');
-      const file = (e as DragEvent).dataTransfer?.files[0];
-      if (file) await this.handleUpload(file);
-    });
+    uploader?.addEventListener('dragover', (e) => { e.preventDefault(); uploader.classList.add('drag-over'); });
+    uploader?.addEventListener('dragleave', () => uploader.classList.remove('drag-over'));
+    uploader?.addEventListener('drop', async (e) => { e.preventDefault(); uploader.classList.remove('drag-over'); const files = (e as DragEvent).dataTransfer?.files; if (files?.length) await this.handleUploadMultiple(Array.from(files)); });
 
-    const backBtn = app.querySelector('#back-btn');
-    backBtn?.addEventListener('click', () => {
-      this.viewer = null;
-      this.render();
+    app.querySelector('#back-btn')?.addEventListener('click', () => { this.viewer = null; this.render(); });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target instanceof HTMLInputElement) return;
+      if (e.key === '/') { e.preventDefault(); searchInput?.focus(); }
+      if (e.key === 'n' || e.key === 'N') { e.preventDefault(); (document.querySelector('#file-input') as HTMLInputElement)?.click(); }
     });
   }
 
-  private updateGrid(): void {
-    const gridSection = document.querySelector('.grid-section');
-    if (gridSection) {
-      gridSection.innerHTML = SiteGrid.render(this.filteredSites, this.session?.role === 'admin');
-      this.attachEventListeners();
-    }
+  private async loadSidebarData(): Promise<void> {
+    try {
+      const stats = await fetch(`${API}/stats`).then(r => r.json()) as {totalLogins: number; totalUsers: number; totalSites: number};
+      document.getElementById('stat-logins')!.textContent = String(stats.totalLogins);
+      document.getElementById('stat-users')!.textContent = String(stats.totalUsers);
+      document.getElementById('stat-sites')!.textContent = String(stats.totalSites);
+    } catch { /* ignore */ }
+
+    const lb = document.getElementById('sidebar-leaderboard');
+    if (!lb) return;
+    try {
+      const data = await fetch(`${API}/leaderboard?limit=5`).then(r => r.json()) as Array<{username: string; visits: number}>;
+      lb.innerHTML = data.length ? data.map((e, i) => `<div class="sidebar-item ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}"><span class="sidebar-rank">${i + 1}</span><span class="sidebar-name">${e.username}</span><span class="sidebar-visits">${e.visits}</span></div>`).join('') : '<div class="empty">No visits</div>';
+    } catch { lb.innerHTML = '<div class="empty">Failed</div>'; }
   }
+
+  private updateGrid(): void { const g = document.querySelector('.grid-section'); if (g) { g.innerHTML = SiteGrid.render(this.filteredSites, this.session?.role === 'admin', this.tags); this.attachEventListeners(); } }
 
   private async handleUpload(file: File): Promise<void> {
     if (!this.session) return;
-
     try {
       const content = await file.text();
-      const name = file.name.replace(/\.(html|htm)$/i, '');
-      
-      await fetch(`${API}/sites`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Auth-Token': this.session.token
-        },
-        body: JSON.stringify({ name, content })
-      });
-      
-      const res = await fetch(`${API}/sites`, {
-        headers: { 'X-Auth-Token': this.session.token }
-      });
-      this.sites = await res.json();
-      this.filterSites();
+      await this.apiRequest(`${API}/sites`, { method: 'POST', body: JSON.stringify({ name: file.name.replace(/\.(html?)$/i, ''), content }) });
+      await this.loadSites();
       this.render();
-    } catch (err) {
-      console.error('Upload failed:', err);
-      alert('Upload failed');
+    } catch (err) { console.error(err); alert('Upload failed'); }
+  }
+
+  private async handleUploadMultiple(files: File[]): Promise<void> {
+    if (!this.session || files.length === 0) return;
+    let uploaded = 0;
+    let failed = 0;
+    for (const file of files) {
+      try {
+        const content = await file.text();
+        await this.apiRequest(`${API}/sites`, { method: 'POST', body: JSON.stringify({ name: file.name.replace(/\.(html?)$/i, ''), content }) });
+        uploaded++;
+      } catch { failed++; }
     }
+    await this.loadSites();
+    this.render();
+    if (failed > 0) alert(`${uploaded} uploaded, ${failed} failed`);
+    else if (uploaded > 1) alert(`${uploaded} files uploaded`);
   }
 
   private async handleDelete(id: string): Promise<void> {
-    if (!this.session || this.session.role !== 'admin') return;
-    if (!confirm('Delete this site?')) return;
+    if (!confirm('Delete?')) return;
+    try { await this.apiRequest(`${API}/sites/${id}`, { method: 'DELETE' }); this.sites = this.sites.filter(s => s.id !== id); this.filterSites(); this.render(); } catch (err) { console.error(err); }
+  }
 
-    try {
-      await fetch(`${API}/sites/${id}`, {
-        method: 'DELETE',
-        headers: { 'X-Auth-Token': this.session.token }
-      });
-      
-      const res = await fetch(`${API}/sites`, {
-        headers: { 'X-Auth-Token': this.session.token }
-      });
-      this.sites = await res.json();
-      this.filterSites();
+  private async handleRename(id: string, currentName: string): Promise<void> {
+    const newName = prompt('Neuer Name:', currentName);
+    if (!newName || newName === currentName) return;
+    try { 
+      await this.apiRequest(`${API}/sites/${id}`, { method: 'PUT', body: JSON.stringify({ name: newName }) }); 
+      await this.loadSites();
       this.render();
-    } catch (err) {
-      console.error('Delete failed:', err);
-    }
+    } catch (err) { console.error(err); alert('Rename failed'); }
+  }
+
+  private async showIconPicker(siteId: string): Promise<void> {
+    const site = this.sites.find(s => s.id === siteId);
+    if (!site) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'settings-overlay';
+    overlay.innerHTML = `
+      <div class="settings-popup icon-picker-popup">
+        <h3>Icon waehlen</h3>
+        <input type="text" id="icon-search" placeholder="Icon suchen..." class="search-input" style="margin-bottom:1rem;">
+        <div class="icon-grid" id="icon-grid"><div class="loading">Loading...</div></div>
+        <button class="settings-close" id="settings-close">Close</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    (window as any).lucide?.createIcons();
+
+    // Fetch icons from Lucide
+    let allIcons: string[] = [];
+    try {
+      const res = await fetch('https://unpkg.com/lucide@latest/icons.json');
+      allIcons = await res.json();
+    } catch { allIcons = ['globe', 'file', 'image', 'code', 'link', 'star', 'heart', 'bookmark']; }
+
+    const grid = document.getElementById('icon-grid')!;
+    const searchInput = document.getElementById('icon-search') as HTMLInputElement;
+
+    const renderIcons = (filter: string) => {
+      const filtered = filter ? allIcons.filter(i => i.toLowerCase().includes(filter.toLowerCase())) : allIcons.slice(0, 200);
+      grid.innerHTML = filtered.slice(0, 100).map(icon => 
+        `<button class="icon-option ${site.icon === icon ? 'selected' : ''}" data-icon="${icon}">
+          <i data-lucide="${icon}"></i>
+        </button>`
+      ).join('');
+      (window as any).lucide?.createIcons();
+    };
+
+    renderIcons('');
+
+    grid.addEventListener('click', async (e) => {
+      const btn = (e.target as Element).closest('.icon-option') as HTMLElement;
+      if (!btn) return;
+      const icon = btn.dataset.icon!;
+      try {
+        await this.apiRequest(`${API}/sites/${siteId}`, { method: 'PUT', body: JSON.stringify({ icon }) });
+        await this.loadSites();
+        this.render();
+        overlay.remove();
+      } catch { alert('Icon update failed'); }
+    });
+
+    searchInput.addEventListener('input', () => renderIcons(searchInput.value));
+    document.getElementById('settings-close')?.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
   }
 
   private async handleView(id: string): Promise<void> {
     if (!this.session) return;
-
     try {
-      const res = await fetch(`${API}/sites/${id}`, {
-        headers: { 'X-Auth-Token': this.session.token }
-      });
-      const site = await res.json();
-      
-      this.viewer = new SiteViewer(site, () => {
-        this.viewer = null;
-        this.render();
-      });
+      const site = await this.apiRequest<Site>(`${API}/sites/${id}`);
+      this.viewer = new SiteViewer(site, () => { this.viewer = null; this.render(); });
       this.viewer.open();
-    } catch (err) {
-      console.error('Load failed:', err);
-    }
+    } catch (err) { console.error(err); }
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  new App();
-});
+document.addEventListener('DOMContentLoaded', () => new App());
