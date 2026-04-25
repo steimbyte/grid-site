@@ -15,7 +15,7 @@ interface User { id: string; username: string; role: 'user' | 'admin'; visits: n
 interface Tag { id: string; name: string; color: string; }
 interface Session { token: string; role: 'user' | 'admin'; username: string; userId: string; }
 
-const API = 'http://localhost:3000/api';
+let API = 'http://localhost:3000/api';
 
 class App {
   private session: Session | null = null;
@@ -30,8 +30,19 @@ class App {
     this.settings = Settings.load();
     Settings.apply(this.settings);
     this.initCursorGlow();
+    void this.initApiUrl();
+  }
+
+  private async initApiUrl(): Promise<void> {
+    try {
+      const res = await fetch('/api/config');
+      const config = await res.json();
+      if (config.frontendUrl) {
+        API = `${config.frontendUrl}/api`;
+      }
+    } catch {}
     this.loadTags();
-    void this.checkSession();
+    await this.checkSession();
   }
 
   private getAuthHeaders(): HeadersInit {

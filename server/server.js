@@ -27,7 +27,8 @@ const CONFIG = {
   jwtExpiresIn: '7d',
   saltRounds: 12,
   sitesDir: process.env.SITES_DIR || '/sites',
-  usersDir: process.env.USERS_DIR || '/users'
+  usersDir: process.env.USERS_DIR || '/users',
+  frontendUrl: process.env.FRONTEND_URL || ''
 };
 
 console.log('═══════════════════════════════════════════════════════');
@@ -346,6 +347,9 @@ app.get('/sites/:id', (req, res) => {
   const f = join(CONFIG.sitesDir, `${req.params.id}.html`);
   existsSync(f) ? res.type('text/html').sendFile(f) : res.status(404).send('Not found');
 });
+
+// Config
+app.get('/api/config', (req, res) => res.json({ frontendUrl: CONFIG.frontendUrl }));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
