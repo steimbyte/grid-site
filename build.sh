@@ -12,11 +12,9 @@ cd "$(dirname "$0")"
 echo "📦 Building npm..."
 npm run build
 
-echo "📁 Copying dist to server/public..."
-# Backup index.html with mobile meta tags
+# Backup index.html with mobile meta tags before copy
 cp server/public/index.html /tmp/index.html.bak
 cp -r dist/* server/public/
-# Restore index.html
 cp /tmp/index.html.bak server/public/index.html
 
 echo "🐳 Docker compose down..."

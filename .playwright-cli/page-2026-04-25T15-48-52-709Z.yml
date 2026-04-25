@@ -1,0 +1,8 @@
+- generic [ref=e5]:
+  - heading "Welcome to Grid-View" [level=2] [ref=e8]
+  - textbox "Username" [ref=e10]
+  - textbox "Password" [ref=e12]
+  - button "Sign In" [ref=e13] [cursor=pointer]
+  - generic [ref=e14]:
+    - generic [ref=e15]: New user?
+    - button "Create account" [ref=e16] [cursor=pointer]
