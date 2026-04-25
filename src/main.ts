@@ -257,7 +257,15 @@ class App {
     app.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); if (this.session?.role === 'admin') void this.handleDelete((btn as HTMLElement).dataset.id!); }));
     app.querySelectorAll('.rename-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); void this.handleRename((btn as HTMLElement).dataset.id!, (btn as HTMLElement).dataset.name!); }));
     app.querySelectorAll('.icon-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); void this.showIconPicker((btn as HTMLElement).dataset.id!); }));
-    app.querySelectorAll('.view-btn, .site-card').forEach(el => el.addEventListener('click', () => void this.handleView((el as HTMLElement).dataset.id!)));
+    app.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); void this.handleView((btn as HTMLElement).dataset.id!); });
+    });
+    app.querySelectorAll('.site-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('.card-actions')) return;
+        void this.handleView((card as HTMLElement).dataset.id!);
+      });
+    });
 
     const fileInput = app.querySelector('#file-input') as HTMLInputElement;
     fileInput?.addEventListener('change', async (e) => { const files = (e.target as HTMLInputElement).files; if (files?.length) { await this.handleUploadMultiple(Array.from(files)); fileInput.value = ''; } });
@@ -352,22 +360,27 @@ class App {
       </div>
     `;
     document.body.appendChild(overlay);
-    (window as any).lucide?.createIcons();
 
-    // Fetch icons from Lucide
+    // Fetch icons from Lucide ESM module
     let allIcons: string[] = [];
     try {
-      const res = await fetch('https://unpkg.com/lucide@latest/icons.json');
-      allIcons = await res.json();
-    } catch { allIcons = ['globe', 'file', 'image', 'code', 'link', 'star', 'heart', 'bookmark']; }
+      const res = await fetch('https://cdn.jsdelivr.net/npm/lucide@latest/dist/esm/lucide.js');
+      const text = await res.text();
+      const matches = text.matchAll(/export \{ default as ([A-Z][a-zA-Z]+)/g);
+      for (const match of matches) {
+        const name = match[1];
+        const kebab = name.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+        allIcons.push(kebab);
+      }
+    } catch { allIcons = ['globe', 'file', 'image', 'code', 'link', 'star', 'heart']; }
 
     const grid = document.getElementById('icon-grid')!;
     const searchInput = document.getElementById('icon-search') as HTMLInputElement;
 
     const renderIcons = (filter: string) => {
       const filtered = filter ? allIcons.filter(i => i.toLowerCase().includes(filter.toLowerCase())) : allIcons.slice(0, 200);
-      grid.innerHTML = filtered.slice(0, 100).map(icon => 
-        `<button class="icon-option ${site.icon === icon ? 'selected' : ''}" data-icon="${icon}">
+      grid.innerHTML = filtered.slice(0, 80).map(icon => 
+        `<button class="icon-option ${site.icon === icon ? 'selected' : ''}" data-icon="${icon}" title="${icon}">
           <i data-lucide="${icon}"></i>
         </button>`
       ).join('');

@@ -261,7 +261,7 @@ app.get('/api/sites', authMiddleware(), (req, res) => {
         const content = readFileSync(join(CONFIG.sitesDir, f), 'utf-8');
         const site = JSON.parse(content);
         const tags = TagsManager.getTagsForSite(site.id);
-        return { id: site.id, name: site.name, uploadedAt: site.uploadedAt, uploadedBy: site.uploadedBy, views: stats.siteViews[site.id] || 0, tags };
+        return { id: site.id, name: site.name, uploadedAt: site.uploadedAt, uploadedBy: site.uploadedBy, views: stats.siteViews[site.id] || 0, tags, icon: site.icon };
       } catch { return null; }
     }).filter(Boolean).sort((a, b) => (a.order || 0) - (b.order || 0));
     res.json(sites);
