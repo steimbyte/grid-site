@@ -1,0 +1,12 @@
+services:
+  site-grid:
+    build: .
+    container_name: site-grid
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./sites:/sites
+      - ./users:/users
+    environment:
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+    restart: unless-stopped

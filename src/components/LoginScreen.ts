@@ -1,0 +1,142 @@
+export class LoginScreen {
+  static render(): string {
+    return `
+      <div class="login-bg">
+        <div class="bg-orb orb-1"></div>
+        <div class="bg-orb orb-2"></div>
+      </div>
+      
+      <div class="login-form-card" id="login-card">
+        <div class="card-glow" id="card-glow"></div>
+        <div class="form-inner">
+          <div class="form-logo">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </div>
+          
+          <h2>Welcome to Grid-View</h2>
+          
+          <div class="field">
+            <input 
+              type="text" 
+              id="login-username" 
+              placeholder="Username"
+              autocomplete="username"
+            >
+          </div>
+          
+          <div class="field">
+            <input 
+              type="password" 
+              id="login-password" 
+              placeholder="Password"
+              autocomplete="current-password"
+            >
+          </div>
+          
+          <button class="submit-btn" id="btn-login">
+            <span>Sign In</span>
+          </button>
+          
+          <div class="login-toggle">
+            <span id="toggle-text">New user?</span>
+            <button id="btn-toggle">Create account</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="login-error" id="login-error"></div>
+    `;
+  }
+
+  static init(onLogin: (username: string, password: string, isRegister: boolean) => Promise<void>): void {
+    const usernameInput = document.getElementById('login-username') as HTMLInputElement;
+    const passwordInput = document.getElementById('login-password') as HTMLInputElement;
+    const loginBtn = document.getElementById('btn-login') as HTMLButtonElement;
+    const toggleBtn = document.getElementById('btn-toggle') as HTMLButtonElement;
+    const toggleText = document.getElementById('toggle-text') as HTMLElement;
+    const errorEl = document.getElementById('login-error') as HTMLElement;
+    const card = document.getElementById('login-card');
+    const glow = document.getElementById('card-glow');
+
+    let isRegister = false;
+
+    // Mouse glow effect
+    card?.addEventListener('mousemove', (e) => {
+      if (!card || !glow) return;
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      glow.style.background = `radial-gradient(circle at ${x}px ${y}px, var(--glow) 0%, transparent 50%)`;
+      glow.style.opacity = '1';
+    });
+
+    card?.addEventListener('mouseleave', () => {
+      if (glow) glow.style.opacity = '0';
+    });
+
+    const toggleMode = () => {
+      isRegister = !isRegister;
+      if (isRegister) {
+        loginBtn.querySelector('span')!.textContent = 'Create Account';
+        toggleText.textContent = 'Have an account?';
+        toggleBtn.textContent = 'Sign in';
+      } else {
+        loginBtn.querySelector('span')!.textContent = 'Sign In';
+        toggleText.textContent = 'New user?';
+        toggleBtn.textContent = 'Create account';
+      }
+      errorEl.classList.remove('show');
+    };
+
+    const doLogin = async () => {
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!username) {
+        usernameInput.classList.add('shake');
+        errorEl.textContent = 'Enter username';
+        errorEl.classList.add('show');
+        setTimeout(() => usernameInput.classList.remove('shake'), 400);
+        return;
+      }
+
+      if (!password) {
+        passwordInput.classList.add('shake');
+        errorEl.textContent = 'Enter password';
+        errorEl.classList.add('show');
+        setTimeout(() => passwordInput.classList.remove('shake'), 400);
+        return;
+      }
+
+      loginBtn.classList.add('loading');
+      errorEl.classList.remove('show');
+      
+      try {
+        await onLogin(username, password, isRegister);
+      } catch (err) {
+        errorEl.textContent = err instanceof Error ? err.message : 'Something went wrong';
+        errorEl.classList.add('show');
+      }
+      
+      loginBtn.classList.remove('loading');
+    };
+
+    loginBtn?.addEventListener('click', doLogin);
+    toggleBtn?.addEventListener('click', toggleMode);
+    
+    passwordInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    usernameInput?.addEventListener('input', () => {
+      errorEl.classList.remove('show');
+    });
+
+    setTimeout(() => usernameInput?.focus(), 100);
+  }
+}
