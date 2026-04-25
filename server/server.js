@@ -245,8 +245,8 @@ app.put('/api/admin/users/:id', authMiddleware(['admin']), async (req, res) => {
 app.delete('/api/admin/users/:id', authMiddleware(['admin']), (req, res) => { try { UserManager.deleteUser(req.params.id); res.json({ success: true }); } catch (err) { res.status(400).json({ error: err.message }); } });
 
 // Stats & Leaderboard
-app.get('/api/stats', (req, res) => res.json(StatsManager.getStats()));
-app.get('/api/leaderboard', (req, res) => res.json(UserManager.getLeaderboard(parseInt(req.query.limit) || 10)));
+app.get('/api/stats', authMiddleware(), (req, res) => res.json(StatsManager.getStats()));
+app.get('/api/leaderboard', authMiddleware(), (req, res) => res.json(UserManager.getLeaderboard(parseInt(req.query.limit) || 10)));
 
 // Tags
 app.get('/api/tags', (req, res) => res.json(TagsManager.getTags()));
@@ -337,21 +337,21 @@ app.get('/api/export', authMiddleware(), (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Static
-app.get('/api/thumbnails/:id', (req, res) => {
+// Static (auth protected)
+app.get('/api/thumbnails/:id', authMiddleware(), (req, res) => {
   const f = join(CONFIG.sitesDir, 'thumbnails', `${req.params.id}.png`);
   existsSync(f) ? res.type('image/png').sendFile(f) : res.status(404).json({ error: 'Not found' });
 });
 
-app.get('/sites/:id', (req, res) => {
+app.get('/sites/:id', authMiddleware(), (req, res) => {
   const f = join(CONFIG.sitesDir, `${req.params.id}.html`);
   existsSync(f) ? res.type('text/html').sendFile(f) : res.status(404).send('Not found');
 });
 
-// Config
-app.get('/api/config', (req, res) => res.json({ frontendUrl: CONFIG.frontendUrl }));
+// Config (no auth needed, only public info)
+app.get('/api/config', (req, res) => res.json({ frontendUrl: CONFIG.frontendUrl || req.protocol + '://' + req.get('host') }));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
 // Start
