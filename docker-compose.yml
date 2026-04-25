@@ -1,6 +1,6 @@
 services:
   site-grid:
-    image: ghcr.io/steimbyte/site-grid:latest
+    image: site-grid:latest
     container_name: site-grid
     ports:
       - "3000:3000"
