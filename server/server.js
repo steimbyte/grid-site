@@ -31,6 +31,41 @@ const CONFIG = {
   frontendUrl: process.env.FRONTEND_URL || ''
 };
 
+// Settings Manager
+class SettingsManager {
+  static #settingsFile = join(CONFIG.usersDir, 'settings.json');
+
+  static #loadSettings() {
+    if (!existsSync(this.#settingsFile)) return { uploadsEnabled: true };
+    try { return JSON.parse(readFileSync(this.#settingsFile, 'utf-8')); }
+    catch { return { uploadsEnabled: true }; }
+  }
+
+  static #saveSettings(data) {
+    writeFileSync(this.#settingsFile, JSON.stringify(data, null, 2));
+  }
+
+  static isUploadsEnabled() {
+    return this.#loadSettings().uploadsEnabled !== false;
+  }
+
+  static setUploadsEnabled(enabled) {
+    const settings = this.#loadSettings();
+    settings.uploadsEnabled = enabled;
+    this.#saveSettings(settings);
+  }
+
+  static getSettings() {
+    return this.#loadSettings();
+  }
+
+  static updateSettings(updates) {
+    const settings = { ...this.#loadSettings(), ...updates };
+    this.#saveSettings(settings);
+    return settings;
+  }
+}
+
 console.log('═══════════════════════════════════════════════════════');
 console.log('  Site Grid Server');
 console.log('═══════════════════════════════════════════════════════');
@@ -282,6 +317,10 @@ app.get('/api/sites/:id', authMiddleware(), (req, res) => {
 
 app.post('/api/sites', authMiddleware(), (req, res) => {
   try {
+    // Check if uploads are enabled
+    if (!SettingsManager.isUploadsEnabled() && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Uploads are disabled' });
+    }
     const { name, content, tags } = req.body;
     if (!name || !content) return res.status(400).json({ error: 'Name and content required' });
     const id = randomUUID();
@@ -350,6 +389,13 @@ app.get('/sites/:id', authMiddleware(), (req, res) => {
 
 // Config (no auth needed, only public info)
 app.get('/api/config', (req, res) => res.json({ frontendUrl: CONFIG.frontendUrl || req.protocol + '://' + req.get('host') }));
+
+// Settings (admin only)
+app.get('/api/settings', authMiddleware(['admin']), (req, res) => res.json(SettingsManager.getSettings()));
+app.put('/api/settings', authMiddleware(['admin']), (req, res) => {
+  try { res.json(SettingsManager.updateSettings(req.body)); }
+  catch (err) { res.status(400).json({ error: err.message }); }
+});
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));

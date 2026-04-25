@@ -8,7 +8,8 @@ export class Header {
     onUsers?: (() => void) | null,
     onGridSize?: () => void,
     onTags?: () => void,
-    onExport?: () => void
+    onExport?: () => void,
+    onSiteSettings?: () => void
   ): string {
     return `
       <header class="header">
@@ -36,6 +37,9 @@ export class Header {
             </button>
             <button class="icon-btn" id="tags-btn" title="Manage Tags">
               <i data-lucide="tag"></i>
+            </button>
+            <button class="icon-btn" id="site-settings-btn" title="Site Settings">
+              <i data-lucide="sliders"></i>
             </button>
             ` : ''}
             <button class="icon-btn" id="settings-btn" title="Settings">

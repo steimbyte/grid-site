@@ -165,6 +165,22 @@ class App {
     });
   }
 
+  private async showSiteSettings(): Promise<void> {
+    if (this.session?.role !== 'admin') return;
+    if (document.querySelector('.settings-overlay')) return;
+    
+    const settings = await this.apiRequest<{uploadsEnabled: boolean}>(`${API}/settings`);
+    const overlay = this.createOverlay(`<div class="settings-popup"><h3>Site Settings</h3><div class="setting-row"><label><input type="checkbox" id="uploads-enabled" ${settings.uploadsEnabled !== false ? 'checked' : ''}> <span>Uploads erlaubt</span></label></div><button class="settings-close" id="settings-close">Close</button></div>`);
+    (window as any).lucide?.createIcons();
+    
+    document.getElementById('settings-close')?.addEventListener('click', () => overlay.remove());
+    
+    document.getElementById('uploads-enabled')?.addEventListener('change', async (e) => {
+      const enabled = (e.target as HTMLInputElement).checked;
+      await this.apiRequest(`${API}/settings`, { method: 'PUT', body: JSON.stringify({ uploadsEnabled: enabled }) });
+    });
+  }
+
   private async renderTags(): Promise<void> {
     const list = document.getElementById('tags-list');
     if (!list) return;
@@ -208,7 +224,7 @@ class App {
 
     app.innerHTML = `
       <div class="app-container">
-        ${Header.render(this.session?.role ?? 'user', this.session?.username ?? 'User', this.handleLogout.bind(this), this.showSettings.bind(this), this.showLeaderboard.bind(this), this.session?.role === 'admin' ? this.showUserManagement.bind(this) : undefined, this.toggleGridSize.bind(this), this.showTags.bind(this), this.exportZip.bind(this))}
+        ${Header.render(this.session?.role ?? 'user', this.session?.username ?? 'User', this.handleLogout.bind(this), this.showSettings.bind(this), this.showLeaderboard.bind(this), this.session?.role === 'admin' ? this.showUserManagement.bind(this) : undefined, this.toggleGridSize.bind(this), this.showTags.bind(this), this.exportZip.bind(this), this.showSiteSettings.bind(this))}
         <div class="main-content">
           <div class="left-panel">
             ${SearchBar.render()}
@@ -260,6 +276,7 @@ class App {
     app.querySelector('#sidebar-upload-btn')?.addEventListener('click', () => document.querySelector<HTMLInputElement>('#file-input')?.click());
     app.querySelector('#users-btn')?.addEventListener('click', () => this.showUserManagement());
     app.querySelector('#tags-btn')?.addEventListener('click', () => this.showTags());
+    app.querySelector('#site-settings-btn')?.addEventListener('click', () => this.showSiteSettings());
     app.querySelector('#export-btn')?.addEventListener('click', () => this.exportZip());
 
     const searchInput = app.querySelector('.search-input') as HTMLInputElement;
