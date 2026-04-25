@@ -149,13 +149,31 @@ class UserManager {
   static getUsers() { return this.#loadData().users.map(u => this.#sanitizeUser(u)); }
   static getUser(id) { const user = this.#loadData().users.find(u => u.id === id); return user ? this.#sanitizeUser(user) : null; }
 
-  static async updateUser(id, updates) {
+  static async updateUser(id, updates, callerRole = 'user') {
     const data = this.#loadData();
     const idx = data.users.findIndex(u => u.id === id);
     if (idx === -1) throw new Error('User not found');
+    
+    // Only admin can change password or role
+    if (updates.password && callerRole !== 'admin') throw new Error('Forbidden');
+    if (updates.role && callerRole !== 'admin') throw new Error('Forbidden');
+    
+    // Hash password if provided
     if (updates.password) updates.password = await bcrypt.hash(updates.password, CONFIG.saltRounds);
+    
+    // Validate username
     if (updates.username && !/^[a-zA-Z0-9_]+$/.test(updates.username)) throw new Error('Invalid username');
-    data.users[idx] = { ...data.users[idx], ...updates, updatedAt: new Date().toISOString() };
+    
+    // Allowed fields only
+    const allowed = ['username', 'password'];
+    if (callerRole === 'admin') allowed.push('role', 'visits');
+    
+    const sanitized = {};
+    for (const key of allowed) {
+      if (updates[key] !== undefined) sanitized[key] = updates[key];
+    }
+    
+    data.users[idx] = { ...data.users[idx], ...sanitized, updatedAt: new Date().toISOString() };
     this.#saveData(data);
     return this.#sanitizeUser(data.users[idx]);
   }
@@ -299,7 +317,7 @@ app.get('/api/auth/me', authMiddleware(), (req, res) => res.json(req.user));
 // Admin Routes
 app.get('/api/admin/users', authMiddleware(['admin']), (req, res) => res.json(UserManager.getUsers()));
 app.get('/api/admin/users/:id', authMiddleware(['admin']), (req, res) => { const u = UserManager.getUser(req.params.id); if (!u) return res.status(404).json({ error: 'Not found' }); res.json(u); });
-app.put('/api/admin/users/:id', authMiddleware(['admin']), async (req, res) => { try { res.json(await UserManager.updateUser(req.params.id, req.body)); } catch (err) { res.status(400).json({ error: err.message }); } });
+app.put('/api/admin/users/:id', authMiddleware(['admin']), async (req, res) => { try { res.json(await UserManager.updateUser(req.params.id, req.body, req.user.role)); } catch (err) { res.status(400).json({ error: err.message }); } });
 app.delete('/api/admin/users/:id', authMiddleware(['admin']), (req, res) => { try { UserManager.deleteUser(req.params.id); res.json({ success: true }); } catch (err) { res.status(400).json({ error: err.message }); } });
 
 // Stats & Leaderboard
@@ -354,7 +372,9 @@ app.post('/api/sites', authMiddleware(), (req, res) => {
     const { name, content, tags } = req.body;
     if (!name || !content) return res.status(400).json({ error: 'Name and content required' });
     const id = randomUUID();
-    const site = { id, name: name.trim(), content, uploadedAt: new Date().toISOString(), uploadedBy: req.user.username, order: Date.now(), icon: req.body.icon || 'file' };
+    // Sanitize name to prevent XSS
+    const sanitizeHtml = (str) => str.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+    const site = { id, name: sanitizeHtml(name.trim()), content, uploadedAt: new Date().toISOString(), uploadedBy: req.user.username, order: Date.now(), icon: req.body.icon?.replace(/[^a-z0-9-]/gi, '') || 'file' };
     writeFileSync(join(CONFIG.sitesDir, `${id}.json`), JSON.stringify(site, null, 2));
     writeFileSync(join(CONFIG.sitesDir, `${id}.html`), content);
     if (tags && tags.length) TagsManager.setSiteTag(id, tags);
