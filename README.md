@@ -144,12 +144,33 @@ PUT    /api/sites/:id       - Site aktualisieren (Name, Icon, Tags)
 DELETE /api/sites/:id       - Site löschen (Admin)
 ```
 
-### Andere
+### Oeffentlich (kein Auth)
 ```
-GET /api/stats        - Statistiken
-GET /api/leaderboard   - Top Benutzer
-GET /api/export        - Alle Sites als TXT
-GET /api/config        - Server Konfiguration
+GET /api/config        - Oeffentliche Konfiguration
+GET /api/health        - Server Status
+POST /api/auth/register - Registrierung
+POST /api/auth/login    - Anmeldung
+```
+
+### Privat (Auth erforderlich)
+```
+GET    /api/stats        - Statistiken
+GET    /api/leaderboard   - Top Benutzer
+GET    /api/sites         - Alle Sites
+GET    /api/sites/:id     - Einzelne Site
+POST   /api/sites          - Site hochladen
+PUT    /api/sites/:id      - Site aktualisieren
+DELETE /api/sites/:id     - Site loeschen (Admin)
+GET    /api/export        - Alle Sites als TXT
+```
+
+### Admin nur
+```
+GET    /api/admin/users    - Alle Benutzer
+PUT    /api/admin/users/:id - Benutzer aktualisieren
+DELETE /api/admin/users/:id - Benutzer loeschen
+POST   /api/tags            - Tag erstellen
+DELETE /api/tags/:id        - Tag loeschen
 ```
 
 ---
