@@ -438,7 +438,11 @@ app.get('/sites/:id', authMiddleware(), (req, res) => {
 });
 
 // Config (no auth needed, only public info)
-app.get('/api/config', (req, res) => res.json({ frontendUrl: CONFIG.frontendUrl || req.protocol + '://' + req.get('host') }));
+app.get('/api/config', (req, res) => {
+  const url = CONFIG.frontendUrl || req.protocol + '://' + req.get('host');
+  // Remove trailing slash to avoid double slashes when client adds /api
+  res.json({ frontendUrl: url.replace(/\/$/, '') });
+});
 
 // Settings (admin only)
 app.get('/api/settings', authMiddleware(['admin']), (req, res) => res.json(SettingsManager.getSettings()));

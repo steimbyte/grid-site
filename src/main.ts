@@ -38,7 +38,9 @@ class App {
       const res = await fetch('/api/config');
       const config = await res.json();
       if (config.frontendUrl) {
-        API = `${config.frontendUrl}/api`;
+        // Remove trailing slash to avoid double slashes
+        const baseUrl = config.frontendUrl.replace(/\/$/, '');
+        API = `${baseUrl}/api`;
       }
     } catch {}
     this.loadTags();
