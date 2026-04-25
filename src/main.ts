@@ -122,10 +122,13 @@ class App {
     if (document.querySelector('.settings-overlay')) return;
     const overlay = this.createOverlay(`<div class="settings-popup"><h3>Leaderboard</h3><div class="leaderboard-list" id="leaderboard-list"><div class="loading">Loading...</div></div><button class="settings-close" id="settings-close">Close</button></div>`);
     document.getElementById('settings-close')?.addEventListener('click', () => overlay.remove());
-    fetch(`${API}/leaderboard`).then(r => r.json()).then((data: Array<{username: string; visits: number}>) => {
+    this.apiRequest<Array<{username: string; visits: number}>>(`${API}/leaderboard`).then(data => {
       const list = document.getElementById('leaderboard-list');
       if (!list) return;
       list.innerHTML = data.length ? data.map((e, i) => `<div class="leaderboard-item ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}"><span class="rank">#${i + 1}</span><span class="name">${e.username}</span><span class="visits">${e.visits} visits</span></div>`).join('') : '<div class="empty">No visits yet</div>';
+    }).catch(() => {
+      const list = document.getElementById('leaderboard-list');
+      if (list) list.innerHTML = '<div class="empty">Failed to load</div>';
     });
   }
 
@@ -345,7 +348,7 @@ class App {
 
   private async loadSidebarData(): Promise<void> {
     try {
-      const stats = await fetch(`${API}/stats`).then(r => r.json()) as {totalLogins: number; totalUsers: number; totalSites: number};
+      const stats = await this.apiRequest<{totalLogins: number; totalUsers: number; totalSites: number}>(`${API}/stats`);
       document.getElementById('stat-logins')!.textContent = String(stats.totalLogins);
       document.getElementById('stat-users')!.textContent = String(stats.totalUsers);
       document.getElementById('stat-sites')!.textContent = String(stats.totalSites);
@@ -354,7 +357,7 @@ class App {
     const lb = document.getElementById('sidebar-leaderboard');
     if (!lb) return;
     try {
-      const data = await fetch(`${API}/leaderboard?limit=5`).then(r => r.json()) as Array<{username: string; visits: number}>;
+      const data = await this.apiRequest<Array<{username: string; visits: number}>>(`${API}/leaderboard?limit=5`);
       lb.innerHTML = data.length ? data.map((e, i) => `<div class="sidebar-item ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}"><span class="sidebar-rank">${i + 1}</span><span class="sidebar-name">${e.username}</span><span class="sidebar-visits">${e.visits}</span></div>`).join('') : '<div class="empty">No visits</div>';
     } catch { lb.innerHTML = '<div class="empty">Failed</div>'; }
   }
