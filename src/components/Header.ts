@@ -1,17 +1,17 @@
 export class Header {
-  static render(
-    role: string, 
-    username: string, 
-    onLogout: () => void, 
-    onSettings: () => void, 
-    onLeaderboard: () => void,
-    onUsers?: (() => void) | null,
-    onGridSize?: () => void,
-    onTags?: () => void,
-    onExport?: () => void,
-    onSiteSettings?: () => void
-  ): string {
-    return `
+	static render(
+		role: string,
+		username: string,
+		_onLogout: () => void,
+		_onSettings: () => void,
+		_onLeaderboard: () => void,
+		_onUsers?: (() => void) | null,
+		_onGridSize?: () => void,
+		_onTags?: () => void,
+		_onExport?: () => void,
+		_onSiteSettings?: () => void,
+	): string {
+		return `
       <header class="header">
         <div class="header-content">
           <div class="logo">
@@ -31,7 +31,9 @@ export class Header {
             <button class="icon-btn" id="export-btn" title="Export Sites">
               <i data-lucide="download"></i>
             </button>
-            ${role === 'admin' ? `
+            ${
+							role === "admin"
+								? `
             <button class="icon-btn" id="users-btn" title="User Management">
               <i data-lucide="users"></i>
             </button>
@@ -41,7 +43,9 @@ export class Header {
             <button class="icon-btn" id="site-settings-btn" title="Site Settings">
               <i data-lucide="sliders"></i>
             </button>
-            ` : ''}
+            `
+								: ""
+						}
             <button class="icon-btn" id="settings-btn" title="Settings">
               <i data-lucide="settings"></i>
             </button>
@@ -52,8 +56,7 @@ export class Header {
         </div>
       </header>
     `;
-  }
+	}
 
-  static init(): void {
-  }
+	static init(): void {}
 }

@@ -1,9 +1,7 @@
 export class LoginScreen {
-  static render(): string {
-    return `
+	static render(): string {
+		return `
       <div class="login-bg">
-        <div class="bg-orb orb-1"></div>
-        <div class="bg-orb orb-2"></div>
       </div>
       
       <div class="login-form-card" id="login-card">
@@ -47,95 +45,107 @@ export class LoginScreen {
       
       <div class="login-error" id="login-error"></div>
     `;
-  }
+	}
 
-  static init(onLogin: (username: string, password: string, isRegister: boolean) => Promise<void>): void {
+	static init(
+		onLogin: (
+			username: string,
+			password: string,
+			isRegister: boolean,
+		) => Promise<void>,
+	): void {
+		const usernameInput = document.getElementById(
+			"login-username",
+		) as HTMLInputElement;
+		const passwordInput = document.getElementById(
+			"login-password",
+		) as HTMLInputElement;
+		const loginBtn = document.getElementById("btn-login") as HTMLButtonElement;
+		const btnText = loginBtn.querySelector(".btn-text") as HTMLElement;
+		const toggleBtn = document.getElementById(
+			"btn-toggle",
+		) as HTMLButtonElement;
+		const toggleText = document.getElementById("toggle-text") as HTMLElement;
+		const errorEl = document.getElementById("login-error") as HTMLElement;
+		const card = document.getElementById("login-card");
+		const glow = document.getElementById("card-glow");
 
-    const usernameInput = document.getElementById('login-username') as HTMLInputElement;
-    const passwordInput = document.getElementById('login-password') as HTMLInputElement;
-    const loginBtn = document.getElementById('btn-login') as HTMLButtonElement;
-    const btnText = loginBtn.querySelector('.btn-text') as HTMLElement;
-    const toggleBtn = document.getElementById('btn-toggle') as HTMLButtonElement;
-    const toggleText = document.getElementById('toggle-text') as HTMLElement;
-    const errorEl = document.getElementById('login-error') as HTMLElement;
-    const card = document.getElementById('login-card');
-    const glow = document.getElementById('card-glow');
+		let isRegister = false;
 
-    let isRegister = false;
+		// Mouse glow effect
+		card?.addEventListener("mousemove", (e) => {
+			if (!card || !glow) return;
+			const rect = card.getBoundingClientRect();
+			const x = e.clientX - rect.left;
+			const y = e.clientY - rect.top;
+			glow.style.background = `radial-gradient(circle at ${x}px ${y}px, var(--glow) 0%, transparent 50%)`;
+			glow.style.opacity = "1";
+		});
 
-    // Mouse glow effect
-    card?.addEventListener('mousemove', (e) => {
-      if (!card || !glow) return;
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      glow.style.background = `radial-gradient(circle at ${x}px ${y}px, var(--glow) 0%, transparent 50%)`;
-      glow.style.opacity = '1';
-    });
+		card?.addEventListener("mouseleave", () => {
+			if (glow) glow.style.opacity = "0";
+		});
 
-    card?.addEventListener('mouseleave', () => {
-      if (glow) glow.style.opacity = '0';
-    });
+		const toggleMode = () => {
+			isRegister = !isRegister;
+			if (isRegister) {
+				btnText.textContent = "Create Account";
+				toggleText.textContent = "Have an account?";
+				toggleBtn.textContent = "Sign in";
+			} else {
+				btnText.textContent = "Sign In";
+				toggleText.textContent = "New user?";
+				toggleBtn.textContent = "Create account";
+			}
+			errorEl.classList.remove("show");
+		};
 
-    const toggleMode = () => {
-      isRegister = !isRegister;
-      if (isRegister) {
-        btnText.textContent = 'Create Account';
-        toggleText.textContent = 'Have an account?';
-        toggleBtn.textContent = 'Sign in';
-      } else {
-        btnText.textContent = 'Sign In';
-        toggleText.textContent = 'New user?';
-        toggleBtn.textContent = 'Create account';
-      }
-      errorEl.classList.remove('show');
-    };
+		const doLogin = async () => {
+			const username = usernameInput.value.trim();
+			const password = passwordInput.value;
 
-    const doLogin = async () => {
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value;
+			if (!username) {
+				usernameInput.classList.add("shake");
+				errorEl.textContent = "Enter username";
+				errorEl.classList.add("show");
+				setTimeout(() => usernameInput.classList.remove("shake"), 400);
+				return;
+			}
 
-      if (!username) {
-        usernameInput.classList.add('shake');
-        errorEl.textContent = 'Enter username';
-        errorEl.classList.add('show');
-        setTimeout(() => usernameInput.classList.remove('shake'), 400);
-        return;
-      }
+			if (!password) {
+				passwordInput.classList.add("shake");
+				errorEl.textContent = "Enter password";
+				errorEl.classList.add("show");
+				setTimeout(() => passwordInput.classList.remove("shake"), 400);
+				return;
+			}
 
-      if (!password) {
-        passwordInput.classList.add('shake');
-        errorEl.textContent = 'Enter password';
-        errorEl.classList.add('show');
-        setTimeout(() => passwordInput.classList.remove('shake'), 400);
-        return;
-      }
+			loginBtn.classList.add("loading");
+			loginBtn.disabled = true;
+			errorEl.classList.remove("show");
 
-      loginBtn.classList.add('loading');
-      loginBtn.disabled = true;
-      errorEl.classList.remove('show');
-      
-      try {
-        await onLogin(username, password, isRegister);
-      } catch (err) {
-        errorEl.textContent = err instanceof Error ? err.message : 'Something went wrong';
-        errorEl.classList.add('show');
-        loginBtn.classList.remove('loading');
-        loginBtn.disabled = false;
-      }
-    };
+			try {
+				await onLogin(username, password, isRegister);
+			} catch (err) {
+				errorEl.textContent =
+					err instanceof Error ? err.message : "Something went wrong";
+				errorEl.classList.add("show");
+				loginBtn.classList.remove("loading");
+				loginBtn.disabled = false;
+			}
+		};
 
-    loginBtn?.addEventListener('click', doLogin);
-    toggleBtn?.addEventListener('click', toggleMode);
-    
-    passwordInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') doLogin();
-    });
+		loginBtn?.addEventListener("click", doLogin);
+		toggleBtn?.addEventListener("click", toggleMode);
 
-    usernameInput?.addEventListener('input', () => {
-      errorEl.classList.remove('show');
-    });
+		passwordInput?.addEventListener("keydown", (e) => {
+			if (e.key === "Enter") doLogin();
+		});
 
-    setTimeout(() => usernameInput?.focus(), 100);
-  }
+		usernameInput?.addEventListener("input", () => {
+			errorEl.classList.remove("show");
+		});
+
+		setTimeout(() => usernameInput?.focus(), 100);
+	}
 }

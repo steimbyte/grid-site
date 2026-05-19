@@ -143,6 +143,298 @@ font-weight: 400;
 
 ---
 
+## Quiz Components
+
+### Quiz Card
+
+```css
+.quiz-card {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: all var(--transition-normal) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.quiz-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--accent), transparent 50%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  pointer-events: none; /* Wichtig! */
+}
+
+.quiz-card:hover {
+  background: var(--glass-light);
+  border-color: var(--border-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px var(--glow);
+}
+```
+
+### Badge Styles
+
+```css
+.badge {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: var(--glass-tint);
+  color: var(--accent);
+  border: 1px solid var(--border-accent);
+}
+
+/* Kategorie-Badges */
+.badge.true-false {
+  background: rgba(90, 138, 106, 0.15);
+  color: #5a8a6a;
+  border-color: rgba(90, 138, 106, 0.4);
+}
+
+.badge.multiple-choice {
+  background: rgba(128, 96, 192, 0.15);
+  color: #8060c0;
+  border-color: rgba(128, 96, 192, 0.4);
+}
+```
+
+### Quiz Option Buttons
+
+```css
+.option-btn {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.875rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--glass);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast) var(--ease-out);
+}
+
+.option-btn:hover:not(:disabled) {
+  background: var(--glass-light);
+  border-color: var(--border-accent);
+}
+
+.option-btn.selected {
+  background: var(--glass-tint);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.option-btn.correct {
+  background: rgba(90, 138, 106, 0.2);
+  border-color: #5a8a6a;
+  color: #5a8a6a;
+}
+
+.option-btn.incorrect {
+  background: rgba(192, 64, 64, 0.2);
+  border-color: #c04040;
+  color: #c04040;
+}
+
+.option-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--glass-light);
+  margin-right: 0.75rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+```
+
+### True/False Buttons
+
+```css
+.true-false-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.tf-btn {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--glass);
+  cursor: pointer;
+  transition: all var(--transition-fast) var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tf-btn:hover:not(:disabled) {
+  background: var(--glass-light);
+  border-color: var(--border-accent);
+}
+
+.tf-btn.selected-true {
+  background: rgba(90, 138, 106, 0.2);
+  border-color: #5a8a6a;
+  color: #5a8a6a;
+}
+
+.tf-btn.selected-false {
+  background: rgba(192, 64, 64, 0.2);
+  border-color: #c04040;
+  color: #c04040;
+}
+```
+
+### Check Answer Button
+
+```css
+.check-answer-btn {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-md);
+  background: var(--glass-tint);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all var(--transition-fast) var(--ease-out);
+}
+
+.check-answer-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+.check-answer-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+```
+
+### Feedback Messages
+
+```css
+.feedback {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  display: none;
+}
+
+.feedback.show {
+  display: block;
+}
+
+.feedback.correct {
+  background: rgba(90, 138, 106, 0.1);
+  border: 1px solid rgba(90, 138, 106, 0.3);
+  color: #5a8a6a;
+}
+
+.feedback.incorrect {
+  background: rgba(192, 64, 64, 0.1);
+  border: 1px solid rgba(192, 64, 64, 0.3);
+  color: #c04040;
+}
+```
+
+### Progress Bar
+
+```css
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--bg-surface);
+  z-index: 1000;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width var(--transition-normal) var(--ease-out);
+  box-shadow: 0 0 10px var(--glow);
+}
+```
+
+### Score Display
+
+```css
+.score-display {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--glass);
+  border: 1px solid var(--border-accent);
+  border-radius: 9999px;
+  color: var(--accent);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+}
+```
+
+### Stats Row
+
+```css
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+```
+
+---
+
 ## Layout
 
 ### Responsive Borders
@@ -164,6 +456,13 @@ font-size: clamp(0.75rem, 1.5vw, 0.875rem);
 ### Grid System
 
 ```css
+/* Quiz Grid */
+.quiz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+
 /* Small cards */
 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 
@@ -222,6 +521,12 @@ grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
 | Back | `arrow-left` |
 | Plus | `plus` |
 | File | `file` |
+| Check | `check` |
+| Check Circle | `check-circle` |
+| X | `x` |
+| List Checks | `list-checks` |
+| Zap | `zap` |
+| Cable | `cable` |
 
 ### Icon Styling
 
@@ -240,6 +545,7 @@ grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
 .logo [data-lucide] { width: 28px; height: 28px; }
 .icon-btn [data-lucide] { width: 18px; height: 18px; }
 .action-btn [data-lucide] { width: 18px; height: 18px; }
+.tf-btn [data-lucide] { width: 24px; height: 24px; }
 ```
 
 ---
@@ -263,6 +569,15 @@ grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   mix-blend-mode: screen;
   z-index: 9999;
 }
+```
+
+### JavaScript
+```javascript
+const cursorGlow = document.getElementById('cursorGlow');
+document.addEventListener('mousemove', (e) => {
+  cursorGlow.style.left = e.clientX + 'px';
+  cursorGlow.style.top = e.clientY + 'px';
+});
 ```
 
 ### Loading Spinner
@@ -397,6 +712,7 @@ iframe.onload = () => {
 .separator {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
+  margin: 2rem 0;
 }
 ```
 
@@ -450,8 +766,75 @@ iframe.onload = () => {
 
 ---
 
+## Quiz JavaScript Structure
+
+### Quiz Data Format
+
+```javascript
+const quizData = {
+  easy: [
+    {
+      id: 'e1',
+      type: 'true-false', // oder 'multiple-choice'
+      question: 'Fragetext hier?',
+      answer: true, // oder Index 0-3 bei multiple-choice
+      explanation: 'Erklärung der richtigen Antwort.',
+      options: ['A', 'B', 'C', 'D'] // nur bei multiple-choice
+    }
+  ],
+  medium: [...],
+  hard: [...]
+};
+```
+
+### Quiz State
+
+```javascript
+let currentDifficulty = 'easy';
+let score = { correct: 0, incorrect: 0, total: 0 };
+let answeredQuestions = new Set();
+
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+```
+
+### Answer Check Logic
+
+```javascript
+function checkAnswer(questionId, selectedAnswer, questionData) {
+  const isCorrect = selectedAnswer === questionData.answer;
+  const feedbackEl = document.getElementById(`feedback-${questionId}`);
+  
+  if (isCorrect) {
+    score.correct++;
+    feedbackEl.className = 'feedback show correct';
+    feedbackEl.innerHTML = `<strong>✓ Richtig!</strong> ${questionData.explanation}`;
+  } else {
+    score.incorrect++;
+    feedbackEl.className = 'feedback show incorrect';
+    const correctText = questionData.type === 'true-false' 
+      ? (questionData.answer ? 'Wahr' : 'Falsch')
+      : `${['A', 'B', 'C', 'D'][questionData.answer]}: ${questionData.options[questionData.answer]}`;
+    feedbackEl.innerHTML = `<strong>✗ Leider falsch.</strong> Richtige Antwort: ${correctText}. ${questionData.explanation}`;
+  }
+  
+  score.total++;
+  answeredQuestions.add(questionId);
+  updateProgress();
+}
+```
+
+---
+
 ## Checklist for New Components
 
+### General
 - [ ] Use CSS variables for all colors
 - [ ] Use Lucide icons via `<i data-lucide="icon">`
 - [ ] Apply glassmorphism with `backdrop-filter`
@@ -460,3 +843,339 @@ iframe.onload = () => {
 - [ ] Support keyboard navigation
 - [ ] Add loading states with themed spinner
 - [ ] Use gradient separators between sections
+- [ ] Set `z-index: 1000` für fixed Elemente (progress-bar, score-display)
+
+### Quiz Specific
+- [ ] `::before` pseudo-elements benötigen `pointer-events: none`
+- [ ] Antwort-Buttons nach Auswahl visuell markieren
+- [ ] Check-Button erst nach Auswahl aktivieren (`disabled` Attribut)
+- [ ] Feedback nach Antwortprüfung anzeigen
+- [ ] Richtige/ falsche Antworten visuell hervorheben
+- [ ] Fortschrittsbalken bei Beantwortung aktualisieren
+- [ ] Score-Statistiken aktuell halten
+- [ ] Fragen beim Tab-Wechsel shuffeln
+
+### Mobile Responsive
+- [ ] Quiz-Grid bei kleinen Bildschirmen einspaltig
+- [ ] Fixed Score-Display ggf. static positionieren
+
+---
+
+# Netzwerk-Simulator Component
+
+## Overview
+
+The network simulator uses the glassmorphism design system with additional network-specific styling.
+
+## Component Structure
+
+```html
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="toolbar-title"><i class="ph ph-network"></i> Netzwerk-Sim</div>
+  <button class="tool-btn">Action</button>
+</div>
+
+<!-- Device Panel -->
+<div class="device-panel">
+  <div class="panel-section">
+    <div class="panel-title">Category</div>
+    <div class="device-grid">
+      <div class="device-item copper">Device</div>
+    </div>
+  </div>
+</div>
+
+<!-- Canvas Area -->
+<div class="canvas-area">
+  <div class="canvas-inner">
+    <svg class="conn-svg"></svg>
+    <div class="sim-node network">Node</div>
+  </div>
+</div>
+
+<!-- Properties Panel -->
+<div class="props-panel">
+  <div class="panel-tabs">
+    <div class="panel-tab active">Tab</div>
+  </div>
+</div>
+```
+
+## Node Types
+
+### Color Coding
+
+| Type | Class | Color | Use Case |
+|------|-------|-------|----------|
+| Copper | `.copper` | #e07020 | Cat5e-Cat7 cables |
+| Fiber | `.fiber` | #4080c0 | OM3-OM4, Singlemode |
+| PoE | `.poe` | #5a8a6a | PoE devices |
+| Network | `.network` | #8060c0 | Switches, Routers, Servers |
+
+### Node Anatomy
+
+```html
+<div class="sim-node network selected">
+  <div class="node-icon"><i class="ph ph-git-branch"></i></div>
+  <div class="node-name">2960-24</div>
+  <div class="node-ports">
+    <div class="node-port connected" data-p="0"></div>
+    <div class="node-port" data-p="1"></div>
+    <div class="node-port uplink" data-p="24"></div>
+  </div>
+  <div class="node-info">
+    <div class="node-info-row">
+      <span>IP:</span>
+      <span>192.168.1.10</span>
+    </div>
+  </div>
+</div>
+```
+
+## Port Styling
+
+### Port States
+
+```css
+/* Default */
+.node-port {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 3px solid var(--border);
+}
+
+/* Hover - Connection available */
+.node-port:hover {
+  transform: scale(1.4);
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* Connected */
+.node-port.connected {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+
+/* Uplink */
+.node-port.uplink {
+  background: var(--device);
+  border-color: var(--device);
+}
+
+/* Connecting (during drag) */
+.node-port.connecting {
+  animation: portPulse 0.5s infinite;
+}
+```
+
+## Connection Lines
+
+```css
+/* SVG Line */
+.conn-line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  cursor: pointer;
+}
+
+.conn-line.copper { stroke: var(--copper); }
+.conn-line.fiber { stroke: var(--fiber); }
+
+.conn-line:hover {
+  stroke-width: 6;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Blocked (STP) */
+.conn-line.blocked {
+  stroke: var(--error);
+  opacity: 0.4;
+  stroke-dasharray: 8,4;
+}
+```
+
+## Packet Animation
+
+```css
+.packet {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2000;
+}
+
+.packet.L3 {
+  background: var(--layer3);
+  box-shadow: 0 0 15px var(--layer3);
+}
+
+.packet.L4 {
+  background: var(--layer4);
+  box-shadow: 0 0 15px var(--layer4);
+}
+
+.packet.L7 {
+  background: var(--layer7);
+  box-shadow: 0 0 15px var(--layer7);
+}
+```
+
+## CLI Terminal
+
+```css
+.cli-terminal {
+  background: #000;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.7rem;
+}
+
+.cli-prompt { color: var(--ok); }
+.cli-cmd { color: var(--text-bright); }
+.cli-out { color: var(--text-muted); }
+.cli-err { color: var(--error); }
+```
+
+## Event Log
+
+```css
+.event-log {
+  background: var(--bg-deep);
+  border-radius: 6px;
+  padding: 8px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.6rem;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.event-layer {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: var(--bg-deep);
+}
+
+/* Layer Colors */
+.event-layer.L3 { background: var(--layer3); } /* 3 - Network */
+.event-layer.L4 { background: var(--layer4); } /* 4 - Transport */
+.event-layer.L7 { background: var(--layer7); } /* 7 - Application */
+.event-layer.Config { background: var(--accent); }
+.event-layer.STP { background: var(--ok); }
+.event-layer.fail { background: var(--error); }
+```
+
+## Design Tokens for Simulator
+
+```css
+:root {
+  /* Network Layer Colors */
+  --layer1: #c04040; /* Physical */
+  --layer2: #e07020; /* Data Link */
+  --layer3: #c9a227; /* Network */
+  --layer4: #5a8a6a; /* Transport */
+  --layer7: #4080c0; /* Application */
+  
+  /* Device Colors */
+  --copper: #e07020;
+  --fiber: #4080c0;
+  --poe: #5a8a6a;
+  --device: #8060c0;
+  
+  /* Status */
+  --error: #c04040;
+  --warn: #e07020;
+  --ok: #5a8a6a;
+}
+```
+
+## Responsive Behavior
+
+```css
+/* Desktop - Full layout */
+.app {
+  grid-template-columns: 220px 1fr 340px;
+  grid-template-rows: 48px 1fr 32px;
+  height: 100vh;
+}
+
+/* Tablet - Collapsible panels */
+@media (max-width: 1024px) {
+  .app {
+    grid-template-columns: 180px 1fr 280px;
+  }
+}
+
+/* Mobile - Stack panels */
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 48px auto 1fr auto 32px;
+  }
+  
+  .device-panel,
+  .props-panel {
+    max-height: 200px;
+  }
+}
+```
+
+## Animation Guidelines
+
+```css
+/* Port Hover */
+transition: all 0.15s;
+
+/* Node Selection */
+transition: box-shadow 0.2s, transform 0.1s;
+
+/* Panel Tabs */
+transition: all 0.15s;
+
+/* Connection Preview */
+animation: dash 0.3s linear infinite;
+
+/* Port Pulse (connecting) */
+@keyframes portPulse {
+  0%, 100% { transform: scale(1.3); }
+  50% { transform: scale(1.5); }
+}
+```
+
+## Accessibility
+
+```css
+/* Focus States */
+.tool-btn:focus,
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.2);
+}
+
+/* Keyboard Navigation */
+.sim-node:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+  }
+}
+```
