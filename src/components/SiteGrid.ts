@@ -90,6 +90,26 @@ export class SiteGrid {
     `;
 	}
 
+	static renderSkeleton(count: number = 6): string {
+		return `
+      <div class="site-grid">
+        ${Array.from({ length: count })
+					.map(
+						() => `
+          <div class="skeleton-card">
+            <div class="skeleton-preview skeleton-shimmer"></div>
+            <div class="skeleton-info">
+              <div class="skeleton-line skeleton-shimmer medium"></div>
+              <div class="skeleton-line skeleton-shimmer short"></div>
+            </div>
+          </div>
+        `,
+					)
+					.join("")}
+      </div>
+    `;
+	}
+
 	static escapeHtml(text: string): string {
 		const div = document.createElement("div");
 		div.textContent = text;

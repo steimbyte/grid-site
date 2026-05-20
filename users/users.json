@@ -1,0 +1,32 @@
+{
+  "users": [
+    {
+      "id": "5f354111-149e-4343-a8c5-4e8e57353bee",
+      "username": "Steimer",
+      "password": "$2a$12$bHXnzf5fK.rhlCCwrZ792OITKbcCswlRKBnwJIfLpENScK/1FN3g.",
+      "role": "admin",
+      "visits": 13,
+      "createdAt": "2026-04-25T14:08:57.408Z",
+      "lastVisit": "2026-04-25T16:35:20.669Z",
+      "updatedAt": "2026-04-25T14:09:08.886Z"
+    },
+    {
+      "id": "d8fcb8b7-aca2-4aae-ba47-c14e39389d50",
+      "username": "test",
+      "password": "$2a$12$StFrZZaoIKqdRVrlzN9u5u8p9Evm1RPtwmI2SfvH7rsInbIpz5rji",
+      "role": "user",
+      "visits": 0,
+      "createdAt": "2026-04-25T15:37:14.891Z",
+      "lastVisit": null
+    },
+    {
+      "id": "7b0932e4-5502-4549-b681-0b0df3a108aa",
+      "username": "admin2",
+      "password": "$2a$12$BFCsQVZO.fU1ZrbQPNmupOc3dGImnzT2ILj7XyYidVzeoH9csxZXC",
+      "role": "user",
+      "visits": 1,
+      "createdAt": "2026-05-19T14:26:28.859Z",
+      "lastVisit": "2026-05-19T14:27:17.403Z"
+    }
+  ]
+}

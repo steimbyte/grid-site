@@ -9,6 +9,7 @@ import { Header } from "./components/Header";
 import { SearchBar } from "./components/SearchBar";
 import { LoginScreen } from "./components/LoginScreen";
 import { Settings } from "./components/Settings";
+import { toast } from "./components/Toast";
 
 interface Site {
 	id: string;
@@ -102,7 +103,19 @@ class App {
 		if (saved) {
 			try {
 				this.session = JSON.parse(saved);
+				// Show skeleton while loading
+				const app = document.getElementById("app");
+				if (app) {
+					app.innerHTML = `
+            <div class="skeleton-header">
+              <div class="skeleton-logo"></div>
+              <div class="skeleton-actions"></div>
+            </div>
+            ${SiteGrid.renderSkeleton(6)}
+          `;
+				}
 				await this.loadSites();
+				await this.loadTags();
 				this.render();
 				return;
 			} catch {
@@ -142,8 +155,7 @@ class App {
 			this.sites = await this.apiRequest<Site[]>(`${API}/sites`);
 			this.filterSites();
 		} catch {
-			this.clearSession();
-			this.renderLogin();
+			toast.error("Failed to load sites");
 		}
 	}
 
