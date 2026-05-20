@@ -1,46 +1,48 @@
 {
   "files": {
-    "src/components/UndertonesShader.ts": {
+    "src/components/SiteViewer.ts": {
       "modifiedRanges": [
         {
           "start": 1,
-          "end": 405
+          "end": 113
         }
       ],
       "importsChanged": false,
-      "lastEdit": "2026-05-19T14:38:16.950Z"
+      "lastEdit": "2026-05-19T15:06:40.947Z"
+    },
+    "test-mobile.cjs": {
+      "modifiedRanges": [
+        {
+          "start": 1,
+          "end": 61
+        }
+      ],
+      "importsChanged": false,
+      "lastEdit": "2026-05-19T15:07:37.084Z"
+    },
+    "test-steimer.cjs": {
+      "modifiedRanges": [
+        {
+          "start": 1,
+          "end": 64
+        }
+      ],
+      "importsChanged": false,
+      "lastEdit": "2026-05-19T15:07:37.182Z"
     },
     "src/main.ts": {
       "modifiedRanges": [
         {
-          "start": 12,
-          "end": 12
-        },
-        {
-          "start": 60,
-          "end": 60
-        },
-        {
-          "start": 457,
-          "end": 470
+          "start": 1,
+          "end": 921
         }
       ],
       "importsChanged": true,
-      "lastEdit": "2026-05-19T14:39:05.162Z"
-    },
-    "src/components/LoginScreen.ts": {
-      "modifiedRanges": [
-        {
-          "start": 5,
-          "end": 17
-        }
-      ],
-      "importsChanged": false,
-      "lastEdit": "2026-05-19T14:38:50.931Z"
+      "lastEdit": "2026-05-19T15:16:54.144Z"
     }
   },
   "turnCycles": 0,
   "maxCycles": 3,
-  "lastUpdated": "2026-05-19T14:39:05.163Z",
-  "sessionId": "lens-mpcq3ajd-95fc72ed"
+  "lastUpdated": "2026-05-19T15:16:54.144Z",
+  "sessionId": "lens-mpcruf93-5fa348c3"
 }

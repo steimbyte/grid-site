@@ -9,7 +9,6 @@ import { Header } from "./components/Header";
 import { SearchBar } from "./components/SearchBar";
 import { LoginScreen } from "./components/LoginScreen";
 import { Settings } from "./components/Settings";
-import { initUndertonesShader } from "./components/UndertonesShader";
 
 interface Site {
 	id: string;
@@ -57,7 +56,6 @@ class App {
 		this.settings = Settings.load();
 		Settings.apply(this.settings);
 		this.initCursorGlow();
-		initUndertonesShader();
 		void this.initApiUrl();
 	}
 
@@ -70,7 +68,9 @@ class App {
 				const baseUrl = config.frontendUrl.replace(/\/$/, "");
 				API = `${baseUrl}/api`;
 			}
-		} catch {}
+		} catch {
+			// Config is optional; proceed with default API URL
+		}
 		this.loadTags();
 		await this.checkSession();
 	}
@@ -194,18 +194,41 @@ class App {
 			.then((data) => {
 				const list = document.getElementById("leaderboard-list");
 				if (!list) return;
-				list.innerHTML = data.length
-					? data
-							.map(
-								(e, i) =>
-									`<div class="leaderboard-item ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : ""}"><span class="rank">#${i + 1}</span><span class="name">${e.username}</span><span class="visits">${e.visits} visits</span></div>`,
-							)
-							.join("")
-					: '<div class="empty">No visits yet</div>';
+				list.textContent = "";
+				if (data.length) {
+					data.forEach((e, i) => {
+						const item = document.createElement("div");
+						item.className = `leaderboard-item ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : ""}`;
+						const nameSpan = document.createElement("span");
+						nameSpan.className = "name";
+						nameSpan.textContent = e.username;
+						const rankSpan = document.createElement("span");
+						rankSpan.className = "rank";
+						rankSpan.textContent = `#${i + 1}`;
+						item.append(rankSpan);
+						item.appendChild(nameSpan);
+						const visitsSpan = document.createElement("span");
+						visitsSpan.className = "visits";
+						visitsSpan.textContent = `${e.visits} visits`;
+						item.appendChild(visitsSpan);
+						list.appendChild(item);
+					});
+				} else {
+					const empty = document.createElement("div");
+					empty.className = "empty";
+					empty.textContent = "No visits yet";
+					list.appendChild(empty);
+				}
 			})
 			.catch(() => {
 				const list = document.getElementById("leaderboard-list");
-				if (list) list.innerHTML = '<div class="empty">Failed to load</div>';
+				if (list) {
+					list.textContent = "";
+					const err = document.createElement("div");
+					err.className = "empty";
+					err.textContent = "Failed to load";
+					list.appendChild(err);
+				}
 			});
 	}
 
@@ -232,31 +255,49 @@ class App {
 					userSettings: Record<string, boolean>;
 				}>(`${API}/settings`),
 			]);
-			list.innerHTML = users
-				.map(
-					(u) => `
-        <div class="user-item">
-          <div class="user-info">
-            <span class="user-name">${u.username}</span>
-            <span class="user-role ${u.role}">${u.role}</span>
-          </div>
-          <div class="user-stats">${u.visits} visits</div>
-          ${
-						u.role !== "admin"
-							? `
-          <div class="user-upload-toggle">
-            <label><input type="checkbox" class="user-upload-perm" data-id="${u.id}" ${settings.userSettings?.[u.id] !== false ? "checked" : ""}> <span>Upload</span></label>
-          </div>
-          `
-							: ""
-					}
-          <div class="user-actions">
-            ${u.role !== "admin" ? `<button class="user-btn promote" data-id="${u.id}">Promote</button>` : ""}
-            <button class="user-btn delete" data-id="${u.id}">Delete</button>
-          </div>
-        </div>`,
-				)
-				.join("");
+			list.textContent = "";
+			users.forEach((u) => {
+				const item = document.createElement("div");
+				item.className = "user-item";
+
+				const userInfo = document.createElement("div");
+				userInfo.className = "user-info";
+
+				const nameSpan = document.createElement("span");
+				nameSpan.className = "user-name";
+				nameSpan.textContent = u.username;
+
+				const roleSpan = document.createElement("span");
+				roleSpan.className = `user-role ${u.role}`;
+				roleSpan.textContent = u.role;
+
+				userInfo.append(nameSpan, roleSpan);
+
+				const statsDiv = document.createElement("div");
+				statsDiv.className = "user-stats";
+				statsDiv.textContent = `${u.visits} visits`;
+
+				item.append(userInfo, statsDiv);
+
+				if (u.role !== "admin") {
+					const uploadToggle = document.createElement("div");
+					uploadToggle.className = "user-upload-toggle";
+					uploadToggle.innerHTML = `<label><input type="checkbox" class="user-upload-perm" data-id="${u.id}" ${settings.userSettings?.[u.id] !== false ? "checked" : ""}> <span>Upload</span></label>`;
+					item.append(uploadToggle);
+
+					const actions = document.createElement("div");
+					actions.className = "user-actions";
+					actions.innerHTML = `<button class="user-btn promote" data-id="${u.id}">Promote</button><button class="user-btn delete" data-id="${u.id}">Delete</button>`;
+					item.append(actions);
+				} else {
+					const actions = document.createElement("div");
+					actions.className = "user-actions";
+					actions.innerHTML = `<button class="user-btn delete" data-id="${u.id}">Delete</button>`;
+					item.append(actions);
+				}
+
+				list.appendChild(item);
+			});
 
 			list.querySelectorAll(".user-upload-perm").forEach((cb) => {
 				cb.addEventListener("change", async (e) => {
@@ -288,7 +329,11 @@ class App {
 					),
 				);
 		} catch {
-			list.innerHTML = '<div class="error">Failed</div>';
+			list.textContent = "";
+			const err = document.createElement("div");
+			err.className = "error";
+			err.textContent = "Failed";
+			list.appendChild(err);
 		}
 	}
 
@@ -374,12 +419,26 @@ class App {
 	private async renderTags(): Promise<void> {
 		const list = document.getElementById("tags-list");
 		if (!list) return;
-		list.innerHTML = this.tags
-			.map(
-				(t) =>
-					`<div class="tag-item"><span class="tag-dot" style="background:${t.color}"></span><span>${t.name}</span><button class="tag-delete" data-id="${t.id}">X</button></div>`,
-			)
-			.join("");
+		list.textContent = "";
+		this.tags.forEach((t) => {
+			const item = document.createElement("div");
+			item.className = "tag-item";
+
+			const dotSpan = document.createElement("span");
+			dotSpan.className = "tag-dot";
+			dotSpan.style.background = t.color;
+
+			const nameSpan = document.createElement("span");
+			nameSpan.textContent = t.name;
+
+			const btn = document.createElement("button");
+			btn.className = "tag-delete";
+			btn.dataset.id = t.id;
+			btn.textContent = "X";
+
+			item.append(dotSpan, nameSpan, btn);
+			list.appendChild(item);
+		});
 		list.querySelectorAll(".tag-delete").forEach((b) =>
 			b.addEventListener("click", async () => {
 				await fetch(`${API}/tags/${(b as HTMLElement).dataset.id}`, {
@@ -644,16 +703,35 @@ class App {
 			const data = await this.apiRequest<
 				Array<{ username: string; visits: number }>
 			>(`${API}/leaderboard?limit=5`);
-			lb.innerHTML = data.length
-				? data
-						.map(
-							(e, i) =>
-								`<div class="sidebar-item ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : ""}"><span class="sidebar-rank">${i + 1}</span><span class="sidebar-name">${e.username}</span><span class="sidebar-visits">${e.visits}</span></div>`,
-						)
-						.join("")
-				: '<div class="empty">No visits</div>';
+			lb.textContent = "";
+			if (data.length) {
+				data.forEach((e, i) => {
+					const item = document.createElement("div");
+					item.className = `sidebar-item ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : ""}`;
+					const rankSpan = document.createElement("span");
+					rankSpan.className = "sidebar-rank";
+					rankSpan.textContent = String(i + 1);
+					const nameSpan = document.createElement("span");
+					nameSpan.className = "sidebar-name";
+					nameSpan.textContent = e.username;
+					const visitsSpan = document.createElement("span");
+					visitsSpan.className = "sidebar-visits";
+					visitsSpan.textContent = String(e.visits);
+					item.append(rankSpan, nameSpan, visitsSpan);
+					lb.appendChild(item);
+				});
+			} else {
+				const empty = document.createElement("div");
+				empty.className = "empty";
+				empty.textContent = "No visits";
+				lb.appendChild(empty);
+			}
 		} catch {
-			lb.innerHTML = '<div class="empty">Failed</div>';
+			lb.textContent = "";
+			const err = document.createElement("div");
+			err.className = "empty";
+			err.textContent = "Failed";
+			lb.appendChild(err);
 		}
 	}
 
@@ -821,5 +899,22 @@ class App {
 		}
 	}
 }
+
+// Load Lucide sprite locally
+async function loadIconSprite() {
+	try {
+		const res = await fetch("/assets/icons/sprite.svg");
+		const svg = await res.text();
+		const div = document.createElement("div");
+		div.id = "icon-sprite";
+		div.style.cssText = "position:absolute;width:0;height:0;overflow:hidden;";
+		div.innerHTML = svg;
+		document.body.insertBefore(div, document.body.firstChild);
+	} catch (e) {
+		console.warn("Could not load icon sprite:", e);
+	}
+}
+
+loadIconSprite();
 
 document.addEventListener("DOMContentLoaded", () => new App());
